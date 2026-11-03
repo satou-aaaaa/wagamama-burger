@@ -9,7 +9,7 @@ import path from "node:path";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
-const { answers, check: judge, condText, perms } = require(path.join(root, "rules.js"));
+const { answers, check: judge, condText, perms, makeDaily, dayNumber, ING } = require(path.join(root, "rules.js"));
 const { LEVELS, CHAPTERS } = require(path.join(root, "levels.js"));
 const url = "file://" + path.join(root, "index.html");
 const results = [];
@@ -48,6 +48,27 @@ for (let k = 0; k < 3000; k++) {
   L.conds.forEach((c) => { if (judge(o, [c])[0] !== ref[c[0]](o, c[1], c[2])) mism.push(`${c.join("/")}@${o.join(",")}`); });
 }
 check("判定の決まりが、別の書き方の判定と3000通りで一致する", mism.length === 0, mism.slice(0, 3).join(" | "));
+
+// 1b. きょうのわがまま：2年分（730日）作り、毎日答えがちょうど1つ・要らない条件なし・同じ日は同じ問題・文は18字以内
+const dBad = [];
+for (let d = 0; d < 730; d++) {
+  const L = makeDaily(d), L2 = makeDaily(d);
+  if (!L) { dBad.push(`${d}:作れない`); continue; }
+  if (JSON.stringify(L) !== JSON.stringify(L2)) dBad.push(`${d}:毎回ちがう`);
+  const a = answers(L.items, L.conds);
+  if (a.length !== 1 || a[0].join() !== L.answer.join()) dBad.push(`${d}:答え${a.length}`);
+  if (L.conds.some((_, k) => answers(L.items, L.conds.filter((__, j) => j !== k)).length === 1)) dBad.push(`${d}:要らない条件`);
+  if (L.conds.some((c) => condText(c).length > 18) || L.items.length > 7) dBad.push(`${d}:長い`);
+}
+check("きょうのわがまま：730日分すべて答えが1つ・要らない条件なし・同じ日は同じ問題", dBad.length === 0, dBad.slice(0, 5).join(","));
+const days = new Set(Array.from({ length: 60 }, (_, d) => JSON.stringify(makeDaily(d).conds)));
+check("きょうのわがまま：60日続けて同じ問題が出ない", days.size === 60, String(days.size));
+check("日の番号は日本時間の0時で変わる（2026-11-03 が #1）", dayNumber(new Date("2026-11-02T23:59:00+09:00")) === -1 && dayNumber(new Date("2026-11-03T00:00:00+09:00")) === 0 && dayNumber(new Date("2026-11-03T23:59:00+09:00")) === 0 && dayNumber(new Date("2026-11-04T00:00:00+09:00")) === 1);
+const html = readFileSync(path.join(root, "index.html"), "utf8");
+const og = (p) => (html.match(new RegExp(`<meta (?:property|name)="${p}" content="([^"]+)"`)) || [])[1];
+check("OGP：題・説明・画像（絶対 URL）・大きいカードの指定がある", og("og:title") && og("og:description") && /^https:\/\/satou-aaaaa\.github\.io\/wagamama-burger\/ogp\.png$/.test(og("og:image") || "") && og("twitter:card") === "summary_large_image", og("og:image"));
+const png = existsSync(path.join(root, "ogp.png")) ? readFileSync(path.join(root, "ogp.png")) : null;
+check("ogp.png が 1200×630 で 1MB 未満", png && png.readUInt32BE(16) === 1200 && png.readUInt32BE(20) === 630 && png.length < 1e6, png ? `${png.readUInt32BE(16)}x${png.readUInt32BE(20)} ${png.length}B` : "無い");
 
 const browser = await chromium.launch(process.env.CHROMIUM_PATH ? { executablePath: process.env.CHROMIUM_PATH } : {});
 try {
@@ -146,6 +167,66 @@ try {
   const share = await page.evaluate(() => shareText());
   check("シェアの文にクリア人数と星が入る", /お客さん \d+\/30 人クリア ★\d+/.test(share), share.split("\n")[1]);
   check("ページのエラーが無い", errors.length === 0, errors.join(" / "));
+
+  // 7b. 出題リンク・きょうのわがまま・連続日数・シェアの文（答えを書かない）
+  const names = Object.values(ING);
+  const leak = (t) => names.filter((n) => t.includes(n));
+  const pq = await browser.newPage({ viewport: { width: 390, height: 800 } });
+  pq.on("pageerror", (e) => errors.push(e.message));
+  await pq.goto(url + "?q=15");
+  let qs = await pq.evaluate(() => __game.state);
+  check("出題リンク（?q=15）で開くと、まだ開いていなくても15人目から遊べる", qs.mode === "level" && qs.lv === 14 && await pq.locator("#banner").isVisible());
+  for (const bad of ["?q=0", "?q=31", "?q=abc", "?q=2.5"]) { await pq.goto(url + bad); if (!(await pq.locator("#title").isVisible())) errors.push("変な出題リンクでタイトルが出ない " + bad); }
+  check("変な出題リンク（0・31・文字・小数）ではタイトルが出る", !errors.some((e) => e.startsWith("変な出題リンク")));
+  await pq.evaluate(() => localStorage.clear()); await pq.goto(url);
+  check("はじめて遊ぶ人には遊び方の案内が出る", await (async () => { await pq.click("#cont"); return pq.locator("#guide").isVisible(); })());
+  await pq.click("#guideOk"); await pq.reload(); await pq.click("#cont");
+  check("案内は「わかった」のあと、開き直しても出ない", !(await pq.locator("#guide").isVisible()));
+  check("条件の文に具材の小さな絵が付く", (await pq.locator("ul.conds .chip i.ly").count()) >= 2);
+  check("「できあがり！」に残りの数が出る", /あと\d+個/.test(await pq.textContent("#go")));
+  // 連続日数：10日目・11日目に解くと2日連続、13日目は0に戻り、解くと1。最高は2のまま
+  const solveDaily = async (d) => { await pq.evaluate((d) => { __game.setToday(d); __game.startDaily(); }, d); const a = await pq.evaluate(() => __game.state.cur.answer); for (const t of a) await pq.click(`.ing[data-t="${t}"]`); await pq.click("#go"); return pq.evaluate(() => __game.state); };
+  let ds = await solveDaily(10);
+  check("きょうのわがまま：一発で解くと星3つ・連続1日", ds.done && ds.stars === 3 && ds.streak === 1, JSON.stringify([ds.stars, ds.streak]));
+  const dText = await pq.evaluate(() => __game.shareText("daily"));
+  check("きょうの結果のシェア文：番号・結果の絵文字・URL・タグがあり、具材の名前（答え）を書かない", /#11/.test(dText) && dText.includes("🟩") && dText.includes("https://satou-aaaaa.github.io/wagamama-burger/") && dText.includes("#わがままバーガー") && leak(dText).length === 0, leak(dText).join(","));
+  ds = await solveDaily(11);
+  check("次の日も解くと2日連続", ds.streak === 2, String(ds.streak));
+  await pq.evaluate(() => { __game.setToday(11); __game.startDaily(); });
+  check("同じ日にもう一度解いても連続は増えず、クリア済みと出る", (await pq.evaluate(() => __game.state.streak)) === 2 && await pq.locator("#banner").isVisible());
+  await pq.evaluate(() => { __game.setToday(13); __game.showTitle(); });
+  check("1日あけると連続は0に戻り、タイトルにとぎれたと出る", (await pq.evaluate(() => __game.state.streak)) === 0 && /とぎれ/.test(await pq.textContent("#streak")));
+  ds = await solveDaily(13);
+  check("とぎれたあと解くと1日から数え直す", ds.streak === 1);
+  await pq.reload();
+  check("開き直しても連続日数と最高が残る", /最高 2日/.test(await pq.textContent("#streak")), await pq.textContent("#streak"));
+  // 間違えてから解くと、結果の絵文字に 🟥 が入る
+  await pq.evaluate(() => { __game.setToday(20); __game.startDaily(); });
+  const d20 = await pq.evaluate(() => __game.state.cur);
+  const w20 = perms(d20.items).find((o) => o.join() !== d20.answer.join());
+  for (const t of w20) await pq.click(`.ing[data-t="${t}"]`); await pq.click("#go"); await pq.click("#retry");
+  for (const t of d20.answer) await pq.click(`.ing[data-t="${t}"]`); await pq.click("#go");
+  const d20t = await pq.evaluate(() => __game.shareText("daily"));
+  check("間違えてから解いたシェア文は 🟥🟩・星2つ", d20t.includes("🟥🟩") && d20t.includes("★★☆"), d20t.split("\n")[1]);
+  // 出題・結果のシェア文
+  await pq.evaluate(() => __game.start(0)); for (const t of LEVELS[0].answer) await pq.click(`.ing[data-t="${t}"]`); await pq.click("#go");
+  check("クリアすると「この注文を出題」「結果をシェア」が出る", await pq.locator("#shareQ").isVisible() && await pq.locator("#shareR").isVisible());
+  const cText = await pq.evaluate(() => __game.shareText("challenge")), lText = await pq.evaluate(() => __game.shareText("level"));
+  check("出題の文は ?q=番号 の URL 付きで、答えを書かない", cText.includes("?q=1\n") && lText.includes("?q=1\n") && leak(cText + lText).length === 0, leak(cText + lText).join(","));
+  // 押す所の大きさ（指で押す所は 44px 以上。積んだ具材と条件の中の絵は除く）
+  const small = [];
+  for (const view of ["title", "play"]) {
+    if (view === "title") await pq.evaluate(() => __game.showTitle()); else await pq.evaluate(() => __game.start(5));
+    small.push(...(await pq.evaluate(() => [...document.querySelectorAll("button, a")].filter((b) => b.offsetParent && !b.classList.contains("ly")).map((b) => { const r = b.getBoundingClientRect(); return { n: b.id || b.className || b.textContent.trim().slice(0, 8), w: r.width, h: r.height }; }).filter((r) => r.h < 44 || r.w < 44).map((r) => `${r.n}:${Math.round(r.w)}x${Math.round(r.h)}`))));
+  }
+  check("ボタンは指で押しやすい大きさ（44px 以上）", small.length === 0, small.join(" "));
+  await pq.close();
+  // 動きを減らす設定の人には、紙吹雪を出さない
+  const pr = await browser.newPage({ viewport: { width: 390, height: 800 }, reducedMotion: "reduce" });
+  await pr.goto(url); await pr.evaluate(() => __game.start(0));
+  for (const t of LEVELS[0].answer) await pr.click(`.ing[data-t="${t}"]`); await pr.click("#go");
+  check("動きを減らす設定では紙吹雪を出さない", (await pr.locator(".confetti").count()) === 0 && (await pr.evaluate(() => __game.state.done)));
+  await pr.close();
 
   // 8. スマホ幅（320・390）で横にはみ出さず、具材7個でも上のパンが台の中に収まる
   const wide = [];
