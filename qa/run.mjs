@@ -208,6 +208,15 @@ try {
   for (const t of d20.answer) await pq.click(`.ing[data-t="${t}"]`); await pq.click("#go");
   const d20t = await pq.evaluate(() => __game.shareText("daily"));
   check("間違えてから解いたシェア文は 🟥🟩・星2つ", d20t.includes("🟥🟩") && d20t.includes("★★☆"), d20t.split("\n")[1]);
+  // 日付をまたいで解いても、その問題の日として記録し、次の日の問題も記録できる（2026-11-03 CodeRabbit 指摘）
+  await pq.evaluate(() => { __game.setToday(40); __game.startDaily(); });
+  const d40 = await pq.evaluate(() => __game.state.cur.answer);
+  await pq.evaluate(() => __game.setToday(41));
+  for (const t of d40) await pq.click(`.ing[data-t="${t}"]`); await pq.click("#go");
+  const s40 = await pq.evaluate(() => [__game.state.streak, __game.shareText("daily")]);
+  ds = await solveDaily(41);
+  const s41 = await pq.evaluate(() => { __game.setToday(42); return __game.shareText("daily"); });
+  check("日付をまたいで解いた問題はその日の記録になり、次の日の問題も記録され、日が変わってもその結果をシェアできる", /#41\n/.test(s40[1]) && s40[0] === 1 && ds.streak === 2 && /#42\n/.test(s41), JSON.stringify([s40, ds.streak, s41.split("\n")[0]]));
   // 出題・結果のシェア文
   await pq.evaluate(() => __game.start(0)); for (const t of LEVELS[0].answer) await pq.click(`.ing[data-t="${t}"]`); await pq.click("#go");
   check("クリアすると「この注文を出題」「結果をシェア」が出る", await pq.locator("#shareQ").isVisible() && await pq.locator("#shareR").isVisible());
