@@ -360,7 +360,7 @@ function shareText(kind) {
   if (kind === "daily" && rec.daily && rec.daily.day === today()) {
     return "🍔 きょうのわがまま #" + (today() + 1) + "\n" + triesStr(rec.daily.tries, rec.daily.hint) + " " + starStr(rec.daily.stars) + (streakNow() > 1 ? "\n🔥 " + streakNow() + "日連続" : "") + "\n" + SITE + "\n" + TAG;
   }
-  if (kind === "challenge") return "🍔 この注文、解ける？\n" + LEVELS[lv].face + "「" + LEVELS[lv].say + "」（条件" + LEVELS[lv].conds.length + "つ）\n" + SITE + "?q=" + (lv + 1) + "\n" + TAG;
+  if (kind === "challenge") return "🍔 この注文、解ける？\n" + LEVELS[lv].face + " お客さん" + (lv + 1) + "（条件" + LEVELS[lv].conds.length + "つ）\n" + SITE + "?q=" + (lv + 1) + "\n" + TAG;
   if (kind === "level") return "🍔 わがままバーガー お客さん" + (lv + 1) + " " + starStr(lastStars) + "\nこの注文、解ける？\n" + SITE + "?q=" + (lv + 1) + "\n" + TAG;
   return "🍔 わがままバーガー\nお客さん " + clearedCount() + "/" + LEVELS.length + " 人クリア ★" + total() + (streakNow() ? "\n🔥 きょうのわがまま " + streakNow() + "日連続" : "") + "\n" + SITE + "\n" + TAG;
 }
@@ -370,7 +370,12 @@ function share(kind, btn) {
   if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () { flash(btn, "コピーしました"); }, function () { flash(btn, "コピーできませんでした"); });
   else flash(btn, "コピーできませんでした");
 }
-function flash(b, s) { var o = b.innerHTML; b.textContent = s; setTimeout(function () { b.innerHTML = o; }, 1500); }
+// 元の文言はボタンに1回だけ覚え、続けて押してもタイマーは1つにする（「コピーしました」のまま残らないように）
+function flash(b, s) {
+  if (b.dataset.o === undefined) b.dataset.o = b.innerHTML;
+  b.textContent = s; clearTimeout(b.flashT);
+  b.flashT = setTimeout(function () { b.innerHTML = b.dataset.o; delete b.dataset.o; }, 1500);
+}
 
 // --- ホーム画面に追加（対応するブラウザだけ。押したときだけ出す）---
 var installEv = null;
@@ -396,6 +401,6 @@ var q = +(new URLSearchParams(location.search).get("q") || 0);
 if (q >= 1 && q <= LEVELS.length && Math.floor(q) === q) start(q - 1, true); else showTitle();
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(function () {});
 // 検査（qa/run.mjs）用の窓口
-window.__game = { start: start, startDaily: startDaily, add: add, finish: finish, showTitle: showTitle, shareText: shareText, setToday: function (d) { todayOverride = d; },
+window.__game = { start: start, startDaily: startDaily, add: add, finish: finish, showTitle: showTitle, shareText: shareText, flash: flash, setToday: function (d) { todayOverride = d; },
   get state() { return { lv: lv, mode: mode, stack: stack.slice(), left: left.slice(), done: done, judged: judged, stars: mode === "daily" ? (rec.daily && rec.daily.day === today() ? rec.daily.stars : 0) : stars(lv), streak: streakNow(), cur: cur }; } };
 </script></body></html>

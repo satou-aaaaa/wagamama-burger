@@ -213,6 +213,13 @@ try {
   check("クリアすると「この注文を出題」「結果をシェア」が出る", await pq.locator("#shareQ").isVisible() && await pq.locator("#shareR").isVisible());
   const cText = await pq.evaluate(() => __game.shareText("challenge")), lText = await pq.evaluate(() => __game.shareText("level"));
   check("出題の文は ?q=番号 の URL 付きで、答えを書かない", cText.includes("?q=1\n") && lText.includes("?q=1\n") && leak(cText + lText).length === 0, leak(cText + lText).join(","));
+  // 出題の文は台詞にも具材の名前が出ることがあるので、全員分で確かめる（2026-11-03 CodeRabbit 指摘：2人目の台詞に「パティ」）
+  const cLeaks = await pq.evaluate((n) => { const out = []; for (let i = 0; i < n; i++) { __game.start(i); const t = __game.shareText("challenge"); out.push([i + 1, t, t.includes("?q=" + (i + 1) + "\n")]); } return out; }, LEVELS.length);
+  const badC = cLeaks.filter(([i, t, ok]) => !ok || leak(t).length);
+  check("全員分の出題の文に具材の名前が無く、それぞれの ?q=番号 が付く", badC.length === 0, badC.map(([i, t]) => i + ":" + leak(t).join("/")).join(" "));
+  // 「コピーしました」を続けて出しても、最後は元の文言に戻る
+  const flashBack = await pq.evaluate(async () => { const b = document.getElementById("share1"); const o = b.innerHTML; __game.flash(b, "コピーしました"); await new Promise((r) => setTimeout(r, 300)); __game.flash(b, "コピーしました"); await new Promise((r) => setTimeout(r, 1900)); return b.innerHTML === o; });
+  check("シェアのボタンを続けて押しても、文言が元に戻る", flashBack);
   // 押す所の大きさ（指で押す所は 44px 以上。積んだ具材と条件の中の絵は除く）
   const small = [];
   for (const view of ["title", "play"]) {
