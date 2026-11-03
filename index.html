@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>わがままバーガー</title>
+<meta name="description" content="お客さんのわがままな注文を全部守る順に具材を積む、答えが1つのバーガーパズル。">
+<meta name="theme-color" content="#e8572a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'">
+<style>
+:root{--bg:#fff6e8;--ink:#3b2414;--sub:#8a6a50;--card:#ffffff;--line:#f0d9bd;--acc:#e8572a;--ok:#2f9e5b;--ng:#d6336c;--star:#f5b800;--stage1:#ffe9c9;--stage2:#ffd9a8}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#22170f;--ink:#fbead6;--sub:#c7a787;--card:#2f2117;--line:#4a3424;--acc:#ff7a45;--ok:#5fd08a;--ng:#ff6b9a;--stage1:#4a3020;--stage2:#3a2618}}
+:root[data-theme="dark"]{--bg:#22170f;--ink:#fbead6;--sub:#c7a787;--card:#2f2117;--line:#4a3424;--acc:#ff7a45;--ok:#5fd08a;--ng:#ff6b9a;--stage1:#4a3020;--stage2:#3a2618}
+*{box-sizing:border-box}
+html,body{overflow-x:hidden}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Maru Gothic ProN","M PLUS Rounded 1c","Yu Gothic UI",system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+main{max-width:460px;margin:0 auto;padding:12px 16px 28px}
+[hidden]{display:none!important}
+header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+h1{font-size:20px;margin:0}
+.icon{font:inherit;font-size:18px;background:none;border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:4px 10px;cursor:pointer}
+/* タイトル */
+.hero{text-align:center;padding:18px 0 6px}
+.hero .big{font-size:30px;font-weight:800;letter-spacing:.04em;margin:8px 0 4px}
+.hero p{margin:0;color:var(--sub);font-size:14px}
+.demo{display:flex;flex-direction:column-reverse;align-items:center;margin:14px auto 0;width:160px}
+.demo .ly{animation:none;cursor:default}
+.chap{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px;margin:12px 0}
+.chap h2{font-size:15px;margin:0 0 2px;display:flex;justify-content:space-between}
+.chap .new{font-size:12px;color:var(--sub);margin-bottom:8px}
+.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.lvbtn{font:inherit;border:2px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;padding:6px 0;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.1}
+.lvbtn .f{font-size:22px}.lvbtn .s{font-size:10px;color:var(--star);letter-spacing:-1px;min-height:11px}
+.lvbtn.lock{opacity:.35;cursor:default}
+.lvbtn.next{border-color:var(--acc)}
+.foot{text-align:center;font-size:12px;color:var(--sub);margin-top:16px;line-height:1.9}
+.foot a{color:var(--sub)}
+/* 遊ぶ画面 */
+.dots{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end;max-width:180px}.dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}.dots i.done{background:var(--ok)}.dots i.cur{background:var(--acc)}
+.order{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px;margin:10px 0}
+.who{display:flex;align-items:center;gap:10px}
+.face{font-size:38px;line-height:1;transition:transform .3s}
+.lv{font-size:12px;color:var(--sub)}.say{font-size:15px;font-weight:700}
+ul.conds{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:4px}
+ul.conds li{font-size:15px;padding:5px 8px;border-radius:10px;background:var(--bg);display:flex;gap:6px;align-items:center}
+ul.conds li b{width:1.2em;text-align:center;flex:none}
+ul.conds li.ok{color:var(--ok)} ul.conds li.ng{color:var(--ng);font-weight:700;animation:shake .4s}
+ul.conds li.newc::after{content:"NEW";font-size:10px;font-weight:800;color:#fff;background:var(--acc);border-radius:6px;padding:1px 5px;margin-left:auto}
+@keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.stage{position:relative;height:350px;background:linear-gradient(var(--stage1),var(--stage2));border-radius:18px;border:2px solid var(--line);display:flex;flex-direction:column-reverse;align-items:center;padding-bottom:14px;overflow:hidden}
+.plate{position:absolute;bottom:6px;width:78%;height:12px;background:#fff;border-radius:50%;box-shadow:0 3px 0 #0002}
+.ly{position:relative;display:block;width:62%;margin-top:-2px;cursor:pointer;animation:drop .35s cubic-bezier(.3,1.4,.5,1);border:0;padding:0;font:inherit;color:inherit}
+.ly .num{position:absolute;left:-34px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--sub);width:24px;text-align:right}
+.ly.hint{outline:3px dashed var(--acc);outline-offset:3px}
+@keyframes drop{from{transform:translateY(-120px);opacity:0}to{transform:none;opacity:1}}
+.t-bun-b{height:34px;background:linear-gradient(#f4b062,#d98a3a);border-radius:8px 8px 22px 22px;width:66%;cursor:default}
+.t-bun-t{height:54px;width:68%;border-radius:50% 50% 10px 10px/95% 95% 10px 10px;background:radial-gradient(ellipse 4px 2px at 25% 35%,#fff9 98%,transparent),radial-gradient(ellipse 4px 2px at 50% 22%,#fff9 98%,transparent),radial-gradient(ellipse 4px 2px at 72% 38%,#fff9 98%,transparent),radial-gradient(ellipse 4px 2px at 40% 52%,#fff9 98%,transparent),radial-gradient(ellipse 4px 2px at 62% 58%,#fff9 98%,transparent),linear-gradient(#f7bd6e,#d98a3a);cursor:default}
+.t-patty{height:32px;background:radial-gradient(circle at 30% 40%,#0002 2px,transparent 3px),radial-gradient(circle at 70% 60%,#0002 2px,transparent 3px),linear-gradient(#7a4422,#4d2610);border-radius:14px;box-shadow:inset 0 -4px 0 #0003}
+.t-cheese{height:14px;width:68%;background:linear-gradient(#ffd84a,#f5b800);clip-path:polygon(0 0,100% 0,100% 100%,86% 100%,82% 190%,78% 100%,30% 100%,25% 220%,20% 100%,0 100%)}
+.t-lettuce{height:22px;width:70%;background:linear-gradient(#8fdc5a,#4caf2c);border-radius:45% 55% 40% 60%/90% 80% 40% 40%}
+.t-tomato{height:19px;width:56%;background:radial-gradient(circle at 30% 50%,#ffb3a3 3px,transparent 4px),radial-gradient(circle at 70% 50%,#ffb3a3 3px,transparent 4px),linear-gradient(#ff5a4a,#d4302a);border-radius:40%}
+.t-pickle{height:14px;width:46%;background:repeating-linear-gradient(90deg,#6fa83a 0 14px,#557f2b 14px 18px);border-radius:8px}
+.t-egg{height:22px;width:60%;background:radial-gradient(circle at 50% 50%,#ffb300 0 22%,#fff 24%);border-radius:50%}
+.t-bacon{height:16px;width:66%;background:repeating-linear-gradient(90deg,#c0392b 0 10px,#f5b7a8 10px 14px);border-radius:4px;transform:skewX(-8deg)}
+.t-onion{height:16px;width:60%;background:transparent;border:4px solid #d9bde6;border-radius:50%}
+.tray{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:12px 0 4px;min-height:60px}
+.ing{border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:6px 10px;display:flex;flex-direction:column;align-items:center;gap:5px;font:inherit;font-size:12px;cursor:pointer;min-width:66px;min-height:56px;justify-content:flex-end}
+.ing .ly{width:44px!important;animation:none;margin:0;cursor:inherit}
+.ing.hint{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc)}
+.note{font-size:12px;color:var(--sub);text-align:center;min-height:1.4em}
+button.b{font:inherit;font-size:18px;font-weight:700;border-radius:14px;padding:12px;background:var(--acc);color:#fff;border:2px solid var(--acc);cursor:pointer;width:100%;margin-top:6px}
+button.b.sec{background:var(--card);color:var(--ink);border-color:var(--line)}
+button.b:disabled{opacity:.35;cursor:default}
+.sub{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+.sub button{font:inherit;font-size:13px;background:none;border:1px solid var(--line);color:var(--sub);border-radius:20px;padding:7px 14px;cursor:pointer}
+.sub button:disabled{opacity:.4}
+.toast{position:absolute;left:50%;top:20%;transform:translate(-50%,-50%) scale(.6);background:var(--card);color:var(--ink);border-radius:16px;padding:10px 16px;font-weight:700;opacity:0;transition:.3s;box-shadow:0 6px 20px #0003;white-space:nowrap;pointer-events:none;z-index:3}
+.toast.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.stars{position:absolute;top:10px;left:0;right:0;text-align:center;font-size:30px;color:var(--star);letter-spacing:4px;z-index:2;text-shadow:0 2px 0 #0002}
+.stars span{display:inline-block;animation:pop .5s backwards}
+.stars span.off{color:#0002}
+@keyframes pop{from{transform:scale(0) rotate(-90deg)}to{transform:none}}
+.confetti{position:absolute;width:8px;height:4px;border-radius:2px;top:-10px;animation:fall 1.6s ease-in forwards;z-index:1}
+@keyframes fall{to{transform:translateY(340px) rotate(540deg);opacity:.2}}
+</style></head><body><main>
+
+<section id="title">
+  <header><h1>🍔 わがままバーガー</h1><button class="icon" id="sound1" aria-label="音">🔊</button></header>
+  <div class="hero">
+    <div class="demo" aria-hidden="true"><span class="ly t-bun-b"></span><span class="ly t-patty"></span><span class="ly t-cheese"></span><span class="ly t-lettuce"></span><span class="ly t-tomato"></span><span class="ly t-bun-t"></span></div>
+    <div class="big">わがまま、ぜんぶ聞きます。</div>
+    <p>注文の条件を全部守る順に、具材を積もう</p>
+  </div>
+  <div id="chapters"></div>
+  <button class="b sec" id="share1">記録をシェア</button>
+  <div class="foot">時間制限なし・広告なし・記録はこの端末の中だけ<br><a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">☕ 作者を応援する（Ko-fi）</a></div>
+</section>
+
+<section id="play" hidden>
+  <header><button class="icon" id="back" aria-label="もどる">◀</button><div class="dots" id="dots"></div><button class="icon" id="sound2" aria-label="音">🔊</button></header>
+  <section class="order"><div class="who"><div class="face" id="face"></div><div><div class="lv" id="lv"></div><div class="say" id="say"></div></div></div><ul class="conds" id="conds"></ul></section>
+  <div class="stage" id="stage"><div class="plate"></div><div class="toast" id="toast"></div></div>
+  <div class="note" id="note"></div>
+  <div class="tray" id="tray"></div>
+  <button class="b" id="go" disabled>できあがり！</button>
+  <div class="sub"><button id="undo">ひとつ戻す</button><button id="retry">やり直す</button><button id="hint">ヒント</button></div>
+</section>
+
+</main>
+<script src="rules.js"></script>
+<script src="levels.js"></script>
+<script>
+"use strict";
+var WIN = ["これこれ！わがまま全部入り！", "完璧。また来ます", "うまい！注文した自分もえらい", "言うこと全部聞いてくれた…", "店長、天才では？"];
+var LOSE = ["うーん、そこじゃない", "ちがう、そうじゃない", "ほぼ合ってる。ほぼ。", "こだわりが…こだわりが…", "おしい！かじる前に気づいた"];
+var KEY = "wagamamaBurger1";
+var $ = function (id) { return document.getElementById(id); };
+var PER = 10;
+// 記録: best[i] = 0〜3（星）。muted = 音を消す
+var rec = { best: [], muted: false };
+try { var s = JSON.parse(localStorage.getItem(KEY) || "{}"); if (Array.isArray(s.best)) rec.best = s.best; rec.muted = !!s.muted; } catch (e) {}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(rec)); } catch (e) {} }
+function stars(i) { return rec.best[i] || 0; }
+function unlocked(i) { return i === 0 || stars(i - 1) > 0 || stars(i) > 0; }
+function total() { return rec.best.reduce(function (a, b) { return a + (b || 0); }, 0); }
+function clearedCount() { return rec.best.filter(function (b) { return b > 0; }).length; }
+
+// --- 音（端末の中で鳴らすだけ。外へは何も送らない）---
+var ac = null;
+function beep(freqs, dur, type) {
+  if (rec.muted) return;
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    freqs.forEach(function (f, k) {
+      var o = ac.createOscillator(), g = ac.createGain(), t = ac.currentTime + k * dur * 0.8;
+      o.type = type || "triangle"; o.frequency.value = f; o.connect(g); g.connect(ac.destination);
+      g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.18, t + 0.01); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      o.start(t); o.stop(t + dur + 0.02);
+    });
+  } catch (e) {}
+}
+var SND = {
+  put: function () { beep([520 + Math.random() * 120], 0.09); },
+  off: function () { beep([300], 0.08); },
+  win: function () { beep([523, 659, 784, 1047], 0.14); },
+  ng: function () { beep([220, 180], 0.16, "square"); },
+};
+function soundIcon() { $("sound1").textContent = $("sound2").textContent = rec.muted ? "🔈" : "🔊"; }
+function toggleSound() { rec.muted = !rec.muted; save(); soundIcon(); SND.put(); }
+
+// --- タイトル ---
+function showTitle() {
+  $("play").hidden = true; $("title").hidden = false;
+  var h = "";
+  CHAPTERS.forEach(function (c, ci) {
+    var st = 0; for (var i = ci * PER; i < (ci + 1) * PER; i++) st += stars(i);
+    h += '<div class="chap"><h2><span>' + (ci + 1) + "章 " + c.name + "</span><span>★" + st + "/" + PER * 3 + '</span></h2><div class="new">新しいこだわり：' + c.new + '</div><div class="grid">';
+    for (var j = ci * PER; j < (ci + 1) * PER; j++) {
+      var L = LEVELS[j], ok = unlocked(j), n = stars(j), next = ok && n === 0;
+      h += '<button class="lvbtn' + (ok ? "" : " lock") + (next ? " next" : "") + '" data-i="' + j + '"' + (ok ? "" : " disabled") + ' aria-label="お客さん' + (j + 1) + '">' +
+        '<span class="f">' + (ok ? L.face : "？") + '</span><span class="s">' + (n ? "★★★".slice(0, n) : "") + "</span></button>";
+    }
+    h += "</div></div>";
+  });
+  $("chapters").innerHTML = h;
+  $("chapters").querySelectorAll(".lvbtn:not(.lock)").forEach(function (b) { b.onclick = function () { start(+b.dataset.i); }; });
+  $("share1").hidden = clearedCount() === 0;
+}
+
+// --- 遊ぶ画面 ---
+var lv = 0, stack = [], left = [], done = false, judged = null, hintAt = null, hintIng = null, usedHint = false, tries = 0, drawn = 0;
+function chapterOf(i) { return Math.floor(i / PER); }
+function isNewCond(i, c) {
+  // その章で初めて出る種類に NEW を付ける（各章の最初の2人だけ）
+  var ch = chapterOf(i); if (i - ch * PER > 1 || ch === 0) return false;
+  var kinds = { 1: ["apart", "same", "notBottom"], 2: ["gap"] }[ch] || [];
+  return kinds.indexOf(c[0]) >= 0;
+}
+function start(i) {
+  lv = i; stack = []; left = LEVELS[i].items.slice(); done = false; judged = null; hintAt = hintIng = null; usedHint = false; tries = 0; drawn = 0;
+  $("title").hidden = true; $("play").hidden = false;
+  $("stage").querySelectorAll(".stars,.confetti").forEach(function (e) { e.remove(); });
+  render(true); scrollTo(0, 0);
+}
+function layer(t, cls) { var d = document.createElement("button"); d.type = "button"; d.className = "ly t-" + t + (cls ? " " + cls : ""); return d; }
+function render(full) {
+  var L = LEVELS[lv];
+  $("face").textContent = L.face; $("say").textContent = "「" + L.say + "」";
+  $("lv").textContent = (chapterOf(lv) + 1) + "章 お客さん " + (lv % PER + 1) + " / " + PER;
+  var dh = ""; for (var i = chapterOf(lv) * PER; i < (chapterOf(lv) + 1) * PER; i++) dh += '<i class="' + (i === lv ? "cur" : stars(i) ? "done" : "") + '"></i>';
+  $("dots").innerHTML = dh;
+  $("conds").innerHTML = L.conds.map(function (c, k) {
+    var st = judged ? (judged[k] ? "ok" : "ng") : "";
+    return '<li class="' + st + (isNewCond(lv, c) ? " newc" : "") + '"><b>' + (st === "ok" ? "✓" : st === "ng" ? "✗" : "・") + "</b>" + condText(c) + "</li>";
+  }).join("");
+  var sg = $("stage"); sg.querySelectorAll(".ly").forEach(function (e) { e.remove(); });
+  var b = layer("bun-b"); b.style.animation = "none"; b.tabIndex = -1; b.setAttribute("aria-label", "下のパン"); sg.appendChild(b);
+  stack.forEach(function (t, i) {
+    var d = layer(t, hintAt === i ? "hint" : ""); if (i < drawn && !full) d.style.animation = "none";
+    d.setAttribute("aria-label", ING[t] + "（下から" + (i + 1) + "番目）を外す"); d.innerHTML = '<span class="num">' + (i + 1) + "</span>";
+    d.onclick = function () { remove(i); }; sg.appendChild(d);
+  });
+  if (done) { var tp = layer("bun-t"); tp.tabIndex = -1; tp.setAttribute("aria-label", "上のパン"); if (drawn > stack.length) tp.style.animation = "none"; sg.appendChild(tp); drawn = stack.length + 1; }
+  else drawn = stack.length;
+  var cnt = {}; left.forEach(function (t) { cnt[t] = (cnt[t] || 0) + 1; });
+  $("tray").innerHTML = "";
+  Object.keys(cnt).forEach(function (t) {
+    var e = document.createElement("button"); e.className = "ing" + (hintIng === t ? " hint" : ""); e.dataset.t = t;
+    e.innerHTML = '<span class="ly t-' + t + '"></span>' + ING[t] + (cnt[t] > 1 ? " ×" + cnt[t] : "");
+    e.onclick = function () { add(t); }; $("tray").appendChild(e);
+  });
+  $("note").textContent = done ? "" : lv === 0 && !stack.length ? "下から順にタップして積む。積んだ具はタップで外せる" : left.length ? "" : "積めたら「できあがり！」";
+  var g = $("go"); g.disabled = !done && left.length > 0;
+  g.textContent = done ? (lv < LEVELS.length - 1 ? "次のお客さん ▶" : "全員クリア！タイトルへ") : "できあがり！";
+  $("undo").disabled = !stack.length || done; $("hint").disabled = done; $("retry").disabled = !stack.length;
+}
+function toast(s) { var t = $("toast"); t.textContent = s; t.classList.add("on"); clearTimeout(toast.h); toast.h = setTimeout(function () { t.classList.remove("on"); }, 1800); }
+function add(t) { if (done) return; var i = left.indexOf(t); if (i < 0) return; left.splice(i, 1); stack.push(t); judged = null; hintAt = hintIng = null; SND.put(); render(); }
+function remove(i) { if (done) return; left.push(stack[i]); stack.splice(i, 1); judged = null; hintAt = hintIng = null; drawn = i; SND.off(); render(); }
+function confetti() {
+  var cs = ["#f5b800", "#e8572a", "#4caf2c", "#d4302a", "#fff"];
+  for (var k = 0; k < 28; k++) { var c = document.createElement("i"); c.className = "confetti"; c.style.left = (Math.random() * 100) + "%"; c.style.background = cs[k % cs.length]; c.style.animationDelay = (Math.random() * 0.4) + "s"; $("stage").appendChild(c); }
+}
+function finish() {
+  if (done) { if (lv < LEVELS.length - 1) start(lv + 1); else showTitle(); return; }
+  if (left.length) return;
+  var L = LEVELS[lv], r = check(stack, L.conds); tries++; judged = r;
+  if (r.every(Boolean)) {
+    done = true;
+    var n = usedHint ? 1 : tries === 1 ? 3 : 2;
+    var first = !stars(lv);
+    rec.best[lv] = Math.max(stars(lv), n); save();
+    render(); SND.win(); confetti();
+    var st = document.createElement("div"); st.className = "stars";
+    st.innerHTML = [0, 1, 2].map(function (k) { return '<span class="' + (k < n ? "" : "off") + '" style="animation-delay:' + (0.2 + k * 0.15) + 's">★</span>'; }).join("");
+    $("stage").appendChild(st);
+    $("face").style.transform = "scale(1.25)"; setTimeout(function () { $("face").style.transform = ""; }, 600);
+    toast(WIN[lv % WIN.length]);
+    if (first && (lv + 1) % PER === 0) setTimeout(function () { toast((chapterOf(lv) + 1) + "章クリア！"); }, 1900);
+    return;
+  }
+  render(); SND.ng();
+  $("face").style.transform = "rotate(-12deg)"; setTimeout(function () { $("face").style.transform = ""; }, 600);
+  toast(LOSE[Math.floor(Math.random() * LOSE.length)]);
+}
+function hint() {
+  if (done) return;
+  var ans = LEVELS[lv].answer, i = 0; while (i < stack.length && stack[i] === ans[i]) i++;
+  // 全部正しく積めているときはヒントを使ったことにしない（星が減らないように）
+  if (i === ans.length) { toast("もう完成！「できあがり！」を押して"); return; }
+  usedHint = true;
+  if (i < stack.length) { hintAt = i; hintIng = null; render(); toast("下から" + (i + 1) + "番目を見直して"); }
+  else { hintAt = null; hintIng = ans[i]; render(); toast("次は" + ING[ans[i]]); }
+}
+function shareText() { return "🍔 わがままバーガー\nお客さん " + clearedCount() + "/" + LEVELS.length + " 人クリア ★" + total() + "\n" + location.href.split("#")[0].split("?")[0]; }
+function share() {
+  var t = shareText();
+  if (navigator.share) { navigator.share({ text: t }).catch(function () {}); return; }
+  if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () { alertLite("コピーしました"); }, function () { alertLite(t); });
+  else alertLite(t);
+}
+function alertLite(s) { var b = $("share1"); var o = b.textContent; b.textContent = s.length > 20 ? "コピーできませんでした" : s; setTimeout(function () { b.textContent = o; }, 1500); }
+
+$("go").onclick = finish;
+$("undo").onclick = function () { if (stack.length && !done) remove(stack.length - 1); };
+// やり直しても、この人への挑戦の回数とヒントは数えたまま（星の数がやり直しで増えないように）
+$("retry").onclick = function () { if (done) return start(lv); left = LEVELS[lv].items.slice(); stack = []; judged = null; hintAt = hintIng = null; drawn = 0; render(true); };
+$("hint").onclick = hint;
+$("back").onclick = showTitle;
+$("sound1").onclick = $("sound2").onclick = toggleSound;
+$("share1").onclick = share;
+soundIcon(); showTitle();
+if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(function () {});
+// 検査（qa/run.mjs）用の窓口
+window.__game = { start: start, add: add, finish: finish, showTitle: showTitle, get state() { return { lv: lv, stack: stack.slice(), left: left.slice(), done: done, judged: judged, stars: stars(lv) }; } };
+</script></body></html>
