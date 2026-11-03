@@ -3,6 +3,17 @@
 <title>わがままバーガー</title>
 <meta name="description" content="お客さんのわがままな注文を全部守る順に具材を積む、答えが1つのバーガーパズル。">
 <meta name="theme-color" content="#e8572a">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="わがままバーガー">
+<meta property="og:title" content="わがままバーガー｜注文どおりに積むパズル">
+<meta property="og:description" content="お客さんのわがままを全部守る順に具材を積もう。毎日1問「きょうのわがまま」。無料・広告なし。">
+<meta property="og:url" content="https://satou-aaaaa.github.io/wagamama-burger/">
+<meta property="og:image" content="https://satou-aaaaa.github.io/wagamama-burger/ogp.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="わがままバーガーのタイトル画面">
+<meta property="og:locale" content="ja_JP">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -12,7 +23,7 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#22170f;--ink:#fbead6;--sub:#c7a787;--card:#2f2117;--line:#4a3424;--acc:#ff7a45;--ok:#5fd08a;--ng:#ff6b9a;--stage1:#4a3020;--stage2:#3a2618}}
 :root[data-theme="dark"]{--bg:#22170f;--ink:#fbead6;--sub:#c7a787;--card:#2f2117;--line:#4a3424;--acc:#ff7a45;--ok:#5fd08a;--ng:#ff6b9a;--stage1:#4a3020;--stage2:#3a2618}
 *{box-sizing:border-box}
-html,body{overflow-x:hidden}
+html{overflow-x:hidden}body{overflow-x:clip} /* body を hidden にすると下の .dock の sticky が効かない */
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Maru Gothic ProN","M PLUS Rounded 1c","Yu Gothic UI",system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
 main{max-width:460px;margin:0 auto;padding:12px 16px 28px}
 [hidden]{display:none!important}
@@ -21,7 +32,7 @@ h1{font-size:20px;margin:0}
 .icon{font:inherit;font-size:18px;background:none;border:1px solid var(--line);color:var(--ink);border-radius:12px;padding:4px 10px;cursor:pointer}
 /* タイトル */
 .hero{text-align:center;padding:18px 0 6px}
-.hero .big{font-size:30px;font-weight:800;letter-spacing:.04em;margin:8px 0 4px}
+.hero .big{font-size:clamp(22px,7vw,30px);font-weight:800;letter-spacing:.04em;margin:8px 0 4px}
 .hero p{margin:0;color:var(--sub);font-size:14px}
 .demo{display:flex;flex-direction:column-reverse;align-items:center;margin:14px auto 0;width:160px}
 .demo .ly{animation:none;cursor:default}
@@ -33,8 +44,34 @@ h1{font-size:20px;margin:0}
 .lvbtn .f{font-size:22px}.lvbtn .s{font-size:10px;color:var(--star);letter-spacing:-1px;min-height:11px}
 .lvbtn.lock{opacity:.35;cursor:default}
 .lvbtn.next{border-color:var(--acc)}
+.extra{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px;margin:12px 0}
+.extra h2,.log summary{font-size:15px;margin:0 0 2px;font-weight:700}
+.extra .new{font-size:12px;color:var(--sub);margin-bottom:8px}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.row3 button{font:inherit;min-height:56px;border:2px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 2px;line-height:1.25}
+.row3 button b{font-size:14px}.row3 button small{font-size:11px;color:var(--sub)}
+.log{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:0 12px;margin:12px 0}
+.log summary{cursor:pointer;min-height:48px;display:flex;align-items:center}
+.log dl{margin:0 0 10px;display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:14px}.log dt{color:var(--sub)}.log dd{margin:0;font-weight:700}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:4px 0 12px}
+.cal i{height:26px;border-radius:6px;background:var(--bg);border:1px solid var(--line);font-style:normal;font-size:10px;display:flex;align-items:center;justify-content:center;color:var(--sub)}
+.after a.fb,.guide a.fb{display:inline-flex;align-items:center;min-height:48px;padding:0 12px;color:var(--sub);font-size:14px}
+.kofi{font-size:13px;color:var(--sub);line-height:1.8;margin:12px 4px;text-align:center}.kofi a{color:var(--acc);font-weight:700;padding:14px 2px}
+.badges{list-style:none;padding:0;margin:0 0 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.badges li{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:6px 8px;display:grid;grid-template-columns:auto 1fr;column-gap:6px;align-items:center;opacity:.6}
+.badges li.on{opacity:1;border-color:var(--star)}
+.badges span{grid-row:span 2;font-size:22px}.badges b{font-size:12px}.badges small{font-size:10px;color:var(--sub)}
+.goal{text-align:center;font-size:13px;color:var(--sub);margin:4px 0 0}
+.zt{display:block;font-size:13px;margin:4px 0}
+.zukan{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin:0 0 12px}
+.zukan i{aspect-ratio:1;border-radius:8px;background:var(--bg);border:1px solid var(--line);font-style:normal;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--sub)}
+.zukan i.s3{border:2px solid var(--star)}
+.cal i.s1{background:#f5b80055}.cal i.s2{background:#f5b800aa}.cal i.s3{background:var(--star);color:#5a3a00;font-weight:800}.cal i.today{outline:2px solid var(--acc)}
+.ing .k{display:none;position:absolute;top:2px;left:5px;font-size:10px;color:var(--sub)}
+@media (hover:hover) and (pointer:fine){.ing .k{display:block}}
+.dist{display:grid;grid-template-columns:auto 1fr auto;gap:3px 6px;align-items:center;font-size:12px;margin:0 0 10px}.dist i{display:block;height:10px;border-radius:5px;background:var(--star);min-width:2px}
 .foot{text-align:center;font-size:12px;color:var(--sub);margin-top:16px;line-height:1.9}
-.foot a{color:var(--sub)}
+.foot a{color:var(--sub);display:inline-flex;align-items:center;min-height:48px;padding:0 10px}
 /* 遊ぶ画面 */
 .dots{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end;max-width:180px}.dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}.dots i.done{background:var(--ok)}.dots i.cur{background:var(--acc)}
 .order{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px;margin:10px 0}
@@ -47,16 +84,21 @@ ul.conds li b{width:1.2em;text-align:center;flex:none}
 ul.conds li.ok{color:var(--ok)} ul.conds li.ng{color:var(--ng);font-weight:700;animation:shake .4s}
 ul.conds li.newc::after{content:"NEW";font-size:10px;font-weight:800;color:#fff;background:var(--acc);border-radius:6px;padding:1px 5px;margin-left:auto}
 @keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
-.stage{position:relative;height:350px;background:linear-gradient(var(--stage1),var(--stage2));border-radius:18px;border:2px solid var(--line);display:flex;flex-direction:column-reverse;align-items:center;padding-bottom:14px;overflow:hidden}
+.stage{position:relative;height:350px;transition:height .2s;background:linear-gradient(var(--stage1),var(--stage2));border-radius:18px;border:2px solid var(--line);display:flex;flex-direction:column-reverse;align-items:center;padding-bottom:14px;overflow:hidden}
 .plate{position:absolute;bottom:6px;width:78%;height:12px;background:#fff;border-radius:50%;box-shadow:0 3px 0 #0002}
 .ly{position:relative;display:block;width:62%;margin-top:-2px;cursor:pointer;animation:drop .35s cubic-bezier(.3,1.4,.5,1);border:0;padding:0;font:inherit;color:inherit}
 .ly .num{position:absolute;left:-34px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--sub);width:24px;text-align:right}
-.ly.hint{outline:3px dashed var(--acc);outline-offset:3px}
+.ly.hint{outline:3px dashed var(--acc);outline-offset:3px;z-index:3}
+@keyframes squash{0%{scale:1}40%{scale:1.04 .86}100%{scale:1}}
+.stage.squash .ly:not(.t-bun-t){animation:squash .3s ease-out!important;transform-origin:50% 100%}
+@media (prefers-reduced-motion: reduce){.stage.squash .ly{animation:none!important}}
 @keyframes drop{from{transform:translateY(-120px);opacity:0}to{transform:none;opacity:1}}
 .t-bun-b{height:34px;background:linear-gradient(#f4b062,#d98a3a);border-radius:8px 8px 22px 22px;width:66%;cursor:default}
 .t-bun-t{height:54px;width:68%;border-radius:50% 50% 10px 10px/95% 95% 10px 10px;background:radial-gradient(ellipse 4px 2px at 25% 35%,#fff9 98%,transparent),radial-gradient(ellipse 4px 2px at 50% 22%,#fff9 98%,transparent),radial-gradient(ellipse 4px 2px at 72% 38%,#fff9 98%,transparent),radial-gradient(ellipse 4px 2px at 40% 52%,#fff9 98%,transparent),radial-gradient(ellipse 4px 2px at 62% 58%,#fff9 98%,transparent),linear-gradient(#f7bd6e,#d98a3a);cursor:default}
 .t-patty{height:32px;background:radial-gradient(circle at 30% 40%,#0002 2px,transparent 3px),radial-gradient(circle at 70% 60%,#0002 2px,transparent 3px),linear-gradient(#7a4422,#4d2610);border-radius:14px;box-shadow:inset 0 -4px 0 #0003}
-.t-cheese{height:14px;width:68%;background:linear-gradient(#ffd84a,#f5b800);clip-path:polygon(0 0,100% 0,100% 100%,86% 100%,82% 190%,78% 100%,30% 100%,25% 220%,20% 100%,0 100%)}
+/* チーズのたれた形は ::before で切る（本体を切ると、横の番号まで消える） */
+.t-cheese{height:14px;width:68%;background:none}
+.t-cheese::before{content:"";position:absolute;inset:0;background:linear-gradient(#ffd84a,#f5b800);clip-path:polygon(0 0,100% 0,100% 100%,86% 100%,82% 190%,78% 100%,30% 100%,25% 220%,20% 100%,0 100%)}
 .t-lettuce{height:22px;width:70%;background:linear-gradient(#8fdc5a,#4caf2c);border-radius:45% 55% 40% 60%/90% 80% 40% 40%}
 .t-tomato{height:19px;width:56%;background:radial-gradient(circle at 30% 50%,#ffb3a3 3px,transparent 4px),radial-gradient(circle at 70% 50%,#ffb3a3 3px,transparent 4px),linear-gradient(#ff5a4a,#d4302a);border-radius:40%}
 .t-pickle{height:14px;width:46%;background:repeating-linear-gradient(90deg,#6fa83a 0 14px,#557f2b 14px 18px);border-radius:8px}
@@ -64,6 +106,7 @@ ul.conds li.newc::after{content:"NEW";font-size:10px;font-weight:800;color:#fff;
 .t-bacon{height:16px;width:66%;background:repeating-linear-gradient(90deg,#c0392b 0 10px,#f5b7a8 10px 14px);border-radius:4px;transform:skewX(-8deg)}
 .t-onion{height:16px;width:60%;background:transparent;border:4px solid #d9bde6;border-radius:50%}
 .tray{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:12px 0 4px;min-height:60px}
+.tray:empty{min-height:0;margin:4px 0 0}
 .ing{border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:6px 10px;display:flex;flex-direction:column;align-items:center;gap:5px;font:inherit;font-size:12px;cursor:pointer;min-width:66px;min-height:56px;justify-content:flex-end}
 .ing .ly{width:44px!important;animation:none;margin:0;cursor:inherit}
 .ing.hint{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc)}
@@ -82,6 +125,33 @@ button.b:disabled{opacity:.35;cursor:default}
 @keyframes pop{from{transform:scale(0) rotate(-90deg)}to{transform:none}}
 .confetti{position:absolute;width:8px;height:4px;border-radius:2px;top:-10px;animation:fall 1.6s ease-in forwards;z-index:1}
 @keyframes fall{to{transform:translateY(340px) rotate(540deg);opacity:.2}}
+/* 押しやすさ：指で押す所は 48px 以上（Google Playables の設計の定石） */
+.icon{min-width:48px;min-height:48px;font-size:20px}
+.sub button{min-height:48px;padding:0 16px}
+.lvbtn{min-height:56px}
+.ing{min-width:76px;min-height:64px;font-size:13px}
+.stage .ly:not(.t-bun-b):not(.t-bun-t)::after{content:"";position:absolute;left:-8%;right:-8%;top:-3px;bottom:-3px}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+/* 条件の文の中の具材 */
+.chip{display:inline-flex;align-items:center;gap:3px;font-weight:700;white-space:nowrap}
+.chip i.ly{display:inline-block;width:18px!important;height:9px!important;margin:0;animation:none;border-width:2px;cursor:inherit}
+/* きょうのわがまま */
+.daily{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:linear-gradient(135deg,var(--acc),#f5a623);color:#fff;border:0;border-radius:18px;padding:14px 16px;margin:14px 0 4px;font:inherit;cursor:pointer;box-shadow:0 4px 0 #0002}
+.daily.weekly{background:linear-gradient(135deg,#8a3fb8,#d0569a);margin-top:0}
+.daily .em{font-size:36px}.daily b{display:block;font-size:18px}.daily small{font-size:13px;opacity:.95}
+.daily .go{margin-left:auto;font-size:22px}
+.streak{text-align:center;font-size:13px;color:var(--sub);min-height:1.4em}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.banner{background:var(--card);border:2px dashed var(--acc);border-radius:14px;padding:8px 12px;margin-top:10px;font-size:14px;text-align:center}
+.guide{background:var(--card);border:2px solid var(--acc);border-radius:16px;padding:12px 14px;margin:10px 0;font-size:14px;line-height:1.7}
+.guide ol{margin:4px 0 8px;padding-left:1.4em}
+.guide button{font:inherit;font-weight:700;background:var(--acc);color:#fff;border:0;border-radius:12px;min-height:48px;padding:0 18px;cursor:pointer}
+.dock{position:sticky;bottom:0;z-index:4;background:var(--bg);padding:2px 0 calc(8px + env(safe-area-inset-bottom));box-shadow:0 -10px 10px -10px #0003}
+.after{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.after button{margin-top:0}
+.left{font-size:13px;font-weight:400;opacity:.9}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.confetti{display:none}}
 </style></head><body><main>
 
 <section id="title">
@@ -91,19 +161,30 @@ button.b:disabled{opacity:.35;cursor:default}
     <div class="big">わがまま、ぜんぶ聞きます。</div>
     <p>注文の条件を全部守る順に、具材を積もう</p>
   </div>
+  <button class="daily" id="dailyBtn"><span class="em" id="dailyFace">🍔</span><span><b>きょうのわがまま</b><small id="dailySub">毎日1問、みんな同じ注文</small></span><span class="go">▶</span></button>
+  <button class="daily weekly" id="weeklyBtn"><span class="em" id="weeklyFace">🦁</span><span><b>今週の特大わがまま</b><small id="weeklySub">具8枚・週に1問</small></span><span class="go">▶</span></button>
+  <div class="streak" id="streak"></div>
+  <div class="goal" id="goal"></div>
+  <div class="row2"><button class="b" id="cont">つづきから</button><button class="b sec" id="share1">記録をシェア</button></div>
+  <button class="b sec" id="install" hidden>📲 ホーム画面に追加（電波なしでも遊べる）</button>
+  <div class="extra"><h2>🍟 おかわり</h2><div class="new">練習問題がいくらでも出ます。ノーミス（★3）を何問つづけられるか</div><div class="row3" id="extras"></div></div>
   <div id="chapters"></div>
-  <button class="b sec" id="share1">記録をシェア</button>
-  <div class="foot">時間制限なし・広告なし・記録はこの端末の中だけ<br><a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">☕ 作者を応援する（Ko-fi）</a></div>
+  <details class="log" id="log"><summary>📒 記録帳</summary><div id="logBody"></div></details>
+  <div class="foot">時間制限なし・広告なし・記録はこの端末の中だけ<br><a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">☕ 作者を応援する（Ko-fi）</a><br><a class="fb" href="https://github.com/satou-aaaaa/wagamama-burger/issues/new?template=feedback.yml" target="_blank" rel="noopener">💬 感想を送る</a></div>
 </section>
 
 <section id="play" hidden>
   <header><button class="icon" id="back" aria-label="もどる">◀</button><div class="dots" id="dots"></div><button class="icon" id="sound2" aria-label="音">🔊</button></header>
+  <div class="banner" id="banner" hidden></div>
   <section class="order"><div class="who"><div class="face" id="face"></div><div><div class="lv" id="lv"></div><div class="say" id="say"></div></div></div><ul class="conds" id="conds"></ul></section>
-  <div class="stage" id="stage"><div class="plate"></div><div class="toast" id="toast"></div></div>
+  <div class="guide" id="guide" hidden><b>あそびかた</b><ol><li>お客さんの条件を読む</li><li>下の具材をタップして、下から積む（積んだ具はタップで外せる）</li><li>全部積んだら「できあがり！」</li></ol><button id="guideOk">わかった</button> <a class="fb" href="https://github.com/satou-aaaaa/wagamama-burger/issues/new?template=feedback.yml" target="_blank" rel="noopener">💬 感想を送る</a></div>
+  <div class="stage" id="stage"><div class="plate"></div><div class="toast" id="toast" role="status" aria-live="polite"></div></div>
   <div class="note" id="note"></div>
-  <div class="tray" id="tray"></div>
-  <button class="b" id="go" disabled>できあがり！</button>
-  <div class="sub"><button id="undo">ひとつ戻す</button><button id="retry">やり直す</button><button id="hint">ヒント</button></div>
+  <div class="dock" id="dock"><div class="tray" id="tray"></div>
+  <button class="b" id="go" disabled>できあがり！</button></div>
+  <div class="after" id="after" hidden><button class="b sec" id="shareQ">🤝 出題する</button><button class="b sec" id="shareR">📣 結果をシェア</button><a class="fb" href="https://github.com/satou-aaaaa/wagamama-burger/issues/new?template=feedback.yml" target="_blank" rel="noopener">💬 感想を送る</a></div>
+  <p class="kofi" id="kofi" hidden>楽しめたら、<a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi でコーヒー1杯の応援</a>をもらえると、新しいお客さんづくりの励みになります（任意・遊ぶのはずっと無料）。</p>
+  <div class="sub" id="sub"><button id="undo">ひとつ戻す</button><button id="retry">やり直す</button><button id="hint">ヒント</button></div>
 </section>
 
 </main>
@@ -114,16 +195,68 @@ button.b:disabled{opacity:.35;cursor:default}
 var WIN = ["これこれ！わがまま全部入り！", "完璧。また来ます", "うまい！注文した自分もえらい", "言うこと全部聞いてくれた…", "店長、天才では？"];
 var LOSE = ["うーん、そこじゃない", "ちがう、そうじゃない", "ほぼ合ってる。ほぼ。", "こだわりが…こだわりが…", "おしい！かじる前に気づいた"];
 var KEY = "wagamamaBurger1";
+var SITE = "https://satou-aaaaa.github.io/wagamama-burger/";
+var TAG = "#わがままバーガー";
 var $ = function (id) { return document.getElementById(id); };
 var PER = 10;
-// 記録: best[i] = 0〜3（星）。muted = 音を消す
-var rec = { best: [], muted: false };
-try { var s = JSON.parse(localStorage.getItem(KEY) || "{}"); if (Array.isArray(s.best)) rec.best = s.best; rec.muted = !!s.muted; } catch (e) {}
-function save() { try { localStorage.setItem(KEY, JSON.stringify(rec)); } catch (e) {} }
+// 記録: best[i] = 0〜3（星）。muted = 音を消す。guided = 遊び方を見た。daily = きょうの記録。streak = 連続日数
+// extra[難しさ] = { n: 解いた数, run: いまのノーミス連続, best: ノーミス連続の最高, perfect: ★3の数 }。log[日] = きょうのわがままの星
+var rec = { wlog: {}, badges: [], best: [], muted: false, guided: false, daily: null, streak: { last: -99, n: 0, max: 0 }, extra: [], log: {} };
+try {
+  var s = JSON.parse(localStorage.getItem(KEY) || "{}");
+  if (Array.isArray(s.best)) rec.best = s.best;
+  rec.muted = !!s.muted; rec.guided = !!s.guided; if (Array.isArray(s.badges)) rec.badges = s.badges; if (s.wlog && typeof s.wlog === "object") rec.wlog = s.wlog;
+  if (s.daily && typeof s.daily.day === "number") rec.daily = s.daily;
+  if (s.streak && typeof s.streak.n === "number") rec.streak = s.streak;
+  if (Array.isArray(s.extra)) rec.extra = s.extra;
+  if (s.log && typeof s.log === "object") rec.log = s.log;
+  fixStreak(rec);
+} catch (e) {}
+// 保存の直前に、別のタブが保存した記録と合わせる（古いタブが新しい記録を消さないように）
+// 連続日数：カレンダー（log）の解いた日から数える。記録の正はカレンダーだけにして、ずれが起きないようにする
+function fixStreak(r) {
+  var days = Object.keys(r.log).filter(function (d) { return r.log[d] > 0; }).map(Number).sort(function (x, y) { return x - y; });
+  var longest = 0, run = 0;
+  days.forEach(function (d, i) { run = i && days[i - 1] === d - 1 ? run + 1 : 1; longest = Math.max(longest, run); });
+  r.streak = { last: days.length ? days[days.length - 1] : -99, n: run, max: Math.max(r.streak.max || 0, longest) };
+}
+function mergeRec(a, b) {
+  if (!b || typeof b !== "object") return a;
+  if (Array.isArray(b.best)) b.best.forEach(function (v, i) { if ((v || 0) > (a.best[i] || 0)) a.best[i] = v; });
+  // きょうのわがままは1日1回。同じ日は先に保存した結果（別のタブが先に解いた結果）を残す
+  if (b.log && typeof b.log === "object") Object.keys(b.log).forEach(function (d) { if (b.log[d]) a.log[d] = b.log[d]; });
+  if (b.daily && typeof b.daily.day === "number" && (!a.daily || b.daily.day >= a.daily.day)) a.daily = b.daily;
+  // 連続日数は合わせたカレンダー（log）から数え直す。タブごとの数を比べて選ぶと、どちらかの日が抜ける
+  if (b.streak) a.streak.max = Math.max(a.streak.max || 0, b.streak.max || 0);
+  fixStreak(a);
+  // n と run は解いた数の多いほう。best と perfect は n に関係なく大きいほう（記録を減らさない）
+  if (Array.isArray(b.extra)) b.extra.forEach(function (x, l) {
+    if (!x || typeof x.n !== "number") return;
+    var y = a.extra[l] && typeof a.extra[l].n === "number" ? a.extra[l] : { n: 0, run: 0, best: 0, perfect: 0 };
+    var m = x.n > y.n ? x : y;
+    a.extra[l] = { n: m.n, run: m.run || 0, best: Math.max(x.best || 0, y.best || 0), perfect: Math.max(x.perfect || 0, y.perfect || 0) };
+  });
+  a.guided = a.guided || !!b.guided;
+  // 特大わがままも週に1回。同じ週は先に保存した結果を残す
+  if (b.wlog && typeof b.wlog === "object") Object.keys(b.wlog).forEach(function (w) { if (b.wlog[w]) a.wlog[w] = b.wlog[w]; });
+  if (Array.isArray(b.badges)) b.badges.forEach(function (id) { if (a.badges.indexOf(id) < 0) a.badges.push(id); });
+  return a;
+}
+function save() { try { mergeRec(rec, JSON.parse(localStorage.getItem(KEY) || "null")); localStorage.setItem(KEY, JSON.stringify(rec)); } catch (e) {} }
 function stars(i) { return rec.best[i] || 0; }
+function ex(l) { var e = rec.extra[l]; if (!e || typeof e.n !== "number") e = rec.extra[l] = { n: 0, run: 0, best: 0, perfect: 0 }; return e; }
+function chapterStars(ci) { var st = 0; for (var i = ci * PER; i < (ci + 1) * PER; i++) st += stars(i); return st; }
 function unlocked(i) { return i === 0 || stars(i - 1) > 0 || stars(i) > 0; }
 function total() { return rec.best.reduce(function (a, b) { return a + (b || 0); }, 0); }
 function clearedCount() { return rec.best.filter(function (b) { return b > 0; }).length; }
+var todayOverride = null;
+function today() { return todayOverride !== null ? todayOverride : dayNumber(new Date()); }
+function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
+// 条件の文の具材の名前に、小さな具材の絵を付ける（読みやすく）
+var NAME_RE = new RegExp(Object.keys(ING).map(function (k) { return ING[k]; }).sort(function (a, b) { return b.length - a.length; }).join("|"), "g");
+var KEY_OF = {}; Object.keys(ING).forEach(function (k) { KEY_OF[ING[k]] = k; });
+function condHtml(c) { return esc(condText(c)).replace(NAME_RE, function (m) { return '<span class="chip"><i class="ly t-' + KEY_OF[m] + '"></i>' + m + "</span>"; }); }
+function buzz(ms) { try { if (navigator.vibrate && !matchMedia("(prefers-reduced-motion: reduce)").matches) navigator.vibrate(ms); } catch (e) {} }
 
 // --- 音（端末の中で鳴らすだけ。外へは何も送らない）---
 var ac = null;
@@ -145,53 +278,196 @@ var SND = {
   win: function () { beep([523, 659, 784, 1047], 0.14); },
   ng: function () { beep([220, 180], 0.16, "square"); },
 };
-function soundIcon() { $("sound1").textContent = $("sound2").textContent = rec.muted ? "🔈" : "🔊"; }
+function soundIcon() { $("sound1").textContent = $("sound2").textContent = rec.muted ? "🔈" : "🔊"; $("sound1").setAttribute("aria-pressed", String(!rec.muted)); }
 function toggleSound() { rec.muted = !rec.muted; save(); soundIcon(); SND.put(); }
 
+// --- 連続日数 ---
+function streakNow() { return rec.streak.last >= today() - 1 ? rec.streak.n : 0; }
+// 次のきょうのわがまま（日本時間の0時）までの時間
+function untilNext(now) { var ms = 86400000 - ((now || Date.now()) + 9 * 3600000) % 86400000, m = Math.ceil(ms / 60000); return Math.floor(m / 60) + "時間" + (m % 60) + "分"; }
+function dailyDone(day) { if (day === undefined) day = today(); return rec.log[day] > 0; }
+
 // --- タイトル ---
+function nextLevel() { for (var i = 0; i < LEVELS.length; i++) if (!stars(i)) return i; return LEVELS.length - 1; }
+var shownDay = null;
+// タイトルを開いたままでも、残り時間を進め、日が変わったら新しい問題に替える
+setInterval(function () {
+  if ($("title").hidden) return;
+  if (today() !== shownDay) showTitle(); else if (dailyDone()) $("dailySub").textContent = "#" + (today() + 1) + " クリア済み ★" + rec.log[today()] + "・次まで " + untilNext();
+}, 30000);
 function showTitle() {
-  $("play").hidden = true; $("title").hidden = false;
+  shownDay = today();
+  $("play").hidden = true; $("title").hidden = false; $("banner").hidden = true;
+  var d = makeDaily(today());
+  $("dailyFace").textContent = d.face;
+  $("dailySub").textContent = dailyDone() ? "#" + (today() + 1) + " クリア済み ★" + rec.log[today()] + "・次まで " + untilNext() : "#" + (today() + 1) + "・毎日1問、みんな同じ注文";
+  var w = thisWeek(), wp = weeklyOf(w);
+  $("weeklyFace").textContent = wp ? wp.face : "🍔";
+  $("weeklySub").textContent = weeklyDone() ? "#" + (w + 1) + " クリア済み ★" + rec.wlog[w] + "・月曜に次の注文" : "#" + (w + 1) + "・具8枚、週に1問";
+  if (newBadges().length) save();
+  var g = BADGES.filter(function (b) { return rec.badges.indexOf(b[0]) < 0; })[0];
+  $("goal").textContent = g ? "🎯 次の目標：" + g[3] : "🏅 実績を全部集めました";
+  var n = streakNow();
+  $("streak").textContent = n ? "🔥 " + n + "日連続（最高 " + rec.streak.max + "日）" : rec.streak.max ? "連続がとぎれました。きょうから、また" : "";
+  $("cont").textContent = clearedCount() ? "つづきから（" + (nextLevel() + 1) + "人目）" : "はじめから";
   var h = "";
   CHAPTERS.forEach(function (c, ci) {
-    var st = 0; for (var i = ci * PER; i < (ci + 1) * PER; i++) st += stars(i);
-    h += '<div class="chap"><h2><span>' + (ci + 1) + "章 " + c.name + "</span><span>★" + st + "/" + PER * 3 + '</span></h2><div class="new">新しいこだわり：' + c.new + '</div><div class="grid">';
+    var st = chapterStars(ci);
+    h += '<div class="chap"><h2><span>' + (ci + 1) + "章 " + c.name + "</span><span>" + (st === PER * 3 ? "👑 " : "") + "★" + st + "/" + PER * 3 + '</span></h2><div class="new">新しいこだわり：' + c.new + '</div><div class="grid">';
     for (var j = ci * PER; j < (ci + 1) * PER; j++) {
-      var L = LEVELS[j], ok = unlocked(j), n = stars(j), next = ok && n === 0;
-      h += '<button class="lvbtn' + (ok ? "" : " lock") + (next ? " next" : "") + '" data-i="' + j + '"' + (ok ? "" : " disabled") + ' aria-label="お客さん' + (j + 1) + '">' +
-        '<span class="f">' + (ok ? L.face : "？") + '</span><span class="s">' + (n ? "★★★".slice(0, n) : "") + "</span></button>";
+      var L = LEVELS[j], ok = unlocked(j), k = stars(j), next = ok && k === 0;
+      h += '<button class="lvbtn' + (ok ? "" : " lock") + (next ? " next" : "") + '" data-i="' + j + '"' + (ok ? "" : " disabled") + ' aria-label="お客さん' + (j + 1) + (k ? "・星" + k : ok ? "" : "・まだ") + '">' +
+        '<span class="f">' + (ok ? L.face : "？") + '</span><span class="s">' + (k ? "★★★".slice(0, k) : "") + "</span></button>";
     }
     h += "</div></div>";
   });
   $("chapters").innerHTML = h;
   $("chapters").querySelectorAll(".lvbtn:not(.lock)").forEach(function (b) { b.onclick = function () { start(+b.dataset.i); }; });
-  $("share1").hidden = clearedCount() === 0;
+  $("share1").hidden = clearedCount() === 0 && !dailyDone();
+  $("extras").innerHTML = EXTRA.map(function (e, l) { var x = ex(l); return '<button data-l="' + l + '"><b>' + e.name + "</b><small>具" + e.n + "枚・" + x.n + "問</small><small>ノーミス最高 " + x.best + "</small></button>"; }).join("");
+  $("extras").querySelectorAll("button").forEach(function (b) { b.onclick = function () { startExtra(+b.dataset.l); }; });
+  showLog();
+}
+// 記録帳：クリア・星・章の王冠・毎日のカレンダー（直近4週）・おかわり
+function showLog() {
+  if (newBadges().length) save(); // 前の版で遊んだ記録からも、取れている実績を付ける
+  var three = rec.best.filter(function (b) { return b === 3; }).length, days = Object.keys(rec.log).length;
+  var crowns = CHAPTERS.map(function (c, ci) { return (ci + 1) + "章" + (chapterStars(ci) === PER * 3 ? "👑" : "・" + chapterStars(ci) + "/" + PER * 3); }).join("　");
+  var cal = "", t = today();
+  for (var d = t - 27; d <= t; d++) { var v = rec.log[d] || 0; cal += '<i class="' + (v ? "s" + v : "") + (d === t ? " today" : "") + '" title="#' + (d + 1) + '">' + (d >= 0 ? (v ? "★" + v : "") : "") + "</i>"; }
+  $("logBody").innerHTML = "<dl><dt>お客さん</dt><dd>" + clearedCount() + "/" + LEVELS.length + "人・★" + total() + "/" + LEVELS.length * 3 + "（★3は" + three + "人）</dd>" +
+    "<dt>章</dt><dd>" + crowns + "</dd><dt>きょうの</dt><dd>解いた日 " + days + "日・最高 " + (rec.streak.max || 0) + "日連続</dd>" +
+    EXTRA.map(function (e, l) { var x = ex(l); return "<dt>" + e.name + "</dt><dd>" + x.n + "問・★3 " + (x.perfect || 0) + "問・ノーミス最高 " + x.best + "</dd>"; }).join("") +
+    "</dl>" + distHtml() + '<div class="cal" aria-label="きょうのわがまま 直近4週">' + cal + "</div>" + zukanHtml() + badgeHtml();
+}
+// 実績：記録から決まる目標。取ったものは badges に覚え、初めて取ったときだけ知らせる。まだのものは条件だけ見せる（次の目標になるように）
+function exSum(f) { return rec.extra.reduce(function (a, x) { return a + (x ? f(x) : 0); }, 0); }
+function chapterDone(ci) { for (var i = ci * PER; i < (ci + 1) * PER; i++) if (!stars(i)) return false; return true; }
+var BADGES = [
+  ["first", "🍔", "はじめての一品", "お客さんを1人満足させる", function () { return clearedCount() >= 1; }],
+  ["ch1", "🥉", "1章のお客さん全員", "1章を全員クリア", function () { return chapterDone(0); }],
+  ["ch2", "🥈", "2章のお客さん全員", "2章を全員クリア", function () { return chapterDone(1); }],
+  ["ch3", "🥇", "3章のお客さん全員", "3章を全員クリア", function () { return chapterDone(2); }],
+  ["ch4", "🏆", "達人のお客さん全員", "4章を全員クリア", function () { return chapterDone(3); }],
+  ["crown", "👑", "王冠", "どれか1章を全員★3", function () { return CHAPTERS.some(function (c, ci) { return chapterStars(ci) === PER * 3; }); }],
+  ["all3", "💎", "全員★3", "40人全員を★3", function () { return rec.best.filter(function (b) { return b === 3; }).length >= LEVELS.length; }],
+  ["d3", "🔥", "3日連続", "きょうのわがままを3日連続", function () { return (rec.streak.max || 0) >= 3; }],
+  ["d7", "📅", "1週間連続", "きょうのわがままを7日連続", function () { return (rec.streak.max || 0) >= 7; }],
+  ["d30", "🌙", "30日連続", "きょうのわがままを30日連続", function () { return (rec.streak.max || 0) >= 30; }],
+  ["days50", "🗓️", "常連さん", "きょうのわがままを50日解く", function () { return Object.keys(rec.log).length >= 50; }],
+  ["big1", "🍔", "特大の一品", "今週の特大わがままを解く", function () { return Object.keys(rec.wlog).length >= 1; }],
+  ["big4", "🏅", "特大の常連", "特大わがままを4週解く", function () { return Object.keys(rec.wlog).length >= 4; }],
+  ["x10", "🍟", "おかわり10問", "おかわりを合わせて10問", function () { return exSum(function (x) { return x.n || 0; }) >= 10; }],
+  ["x100", "🥤", "おかわり100問", "おかわりを合わせて100問", function () { return exSum(function (x) { return x.n || 0; }) >= 100; }],
+  ["run5", "✨", "ノーミス5連続", "おかわりで★3を5問続ける", function () { return rec.extra.some(function (x) { return x && x.best >= 5; }); }],
+  ["run10", "🌟", "ノーミス10連続", "おかわりで★3を10問続ける", function () { return rec.extra.some(function (x) { return x && x.best >= 10; }); }],
+  ["master10", "🧠", "達人のおかわり", "おかわり・達人を10問", function () { return !!(rec.extra[2] && rec.extra[2].n >= 10); }]
+];
+// 新しく取った実績を覚えて返す（知らせる用）
+function newBadges() {
+  var got = [];
+  BADGES.forEach(function (b) { if (rec.badges.indexOf(b[0]) < 0 && b[4]()) { rec.badges.push(b[0]); got.push(b); } });
+  return got;
+}
+function badgeHtml() {
+  return '<b class="zt">実績 ' + rec.badges.length + "/" + BADGES.length + '</b><ul class="badges" aria-label="実績">' + BADGES.map(function (b) {
+    var on = rec.badges.indexOf(b[0]) >= 0;
+    return '<li class="' + (on ? "on" : "") + '"><span aria-hidden="true">' + (on ? b[1] : "🔒") + "</span><b>" + (on ? b[2] : "？？？") + "</b><small>" + b[3] + "</small></li>";
+  }).join("") + "</ul>";
+}
+// お客さん図鑑：満足させたお客さんの顔が並ぶ（まだの人は ？）。★3 の人は金色の枠
+function zukanHtml() {
+  return '<b class="zt">お客さん図鑑 ' + clearedCount() + "/" + LEVELS.length + '</b><div class="zukan" aria-label="お客さん図鑑">' + LEVELS.map(function (L, i) {
+    var s = stars(i); return '<i class="' + (s === 3 ? "s3" : s ? "s" : "") + '" title="' + (s ? (i + 1) + "人目 ★" + s : "まだ") + '">' + (s ? L.face : "？") + "</i>";
+  }).join("") + "</div>";
+}
+// きょうのわがままの星の分布（★3・★2・★1が何日ずつか）
+function distHtml() {
+  var c = [0, 0, 0, 0], all = 0; Object.keys(rec.log).forEach(function (d) { var v = rec.log[d]; if (v >= 1 && v <= 3) { c[v]++; all++; } });
+  if (!all) return "";
+  var mx = Math.max(c[1], c[2], c[3]);
+  return '<div class="dist" aria-label="きょうのわがままの星の分布">' + [3, 2, 1].map(function (v) { return "<span>★" + v + '</span><i style="width:' + Math.round(c[v] / mx * 100) + '%"></i><span>' + c[v] + "日</span>"; }).join("") + "</div>";
 }
 
 // --- 遊ぶ画面 ---
-var lv = 0, stack = [], left = [], done = false, judged = null, hintAt = null, hintIng = null, usedHint = false, tries = 0, drawn = 0;
+var kofiShow = false, dailyShare = null, weeklyShare = null; // Ko-fi のひとことは、章を初めてクリアした結果の画面でだけ出す（shared の kofi/app-guide.md）
+var cur = null, lv = 0, mode = "level", stack = [], left = [], done = false, judged = null, hintAt = null, hintIng = null, usedHint = false, tries = 0, drawn = 0, lastStars = 0;
 function chapterOf(i) { return Math.floor(i / PER); }
-function isNewCond(i, c) {
+function isNewCond(c) {
   // その章で初めて出る種類に NEW を付ける（各章の最初の2人だけ）
-  var ch = chapterOf(i); if (i - ch * PER > 1 || ch === 0) return false;
+  if (mode !== "level") return false;
+  var ch = chapterOf(lv); if (lv - ch * PER > 1 || ch === 0) return false;
   var kinds = { 1: ["apart", "same", "notBottom"], 2: ["gap"] }[ch] || [];
   return kinds.indexOf(c[0]) >= 0;
 }
-function start(i) {
-  lv = i; stack = []; left = LEVELS[i].items.slice(); done = false; judged = null; hintAt = hintIng = null; usedHint = false; tries = 0; drawn = 0;
-  $("title").hidden = true; $("play").hidden = false;
+// 台の高さを、できあがりのバーガー（全部の具＋上下のパン）と星の分だけにする。
+// 小さい画面でも具材と「できあがり！」まで届きやすくするため（大きすぎる台で下へ押し出さない）
+function fitStage(items) {
+  var sg = $("stage"), h = 0;
+  ["bun-b", "bun-t"].concat(items).forEach(function (t) {
+    var d = layer(t); d.style.cssText = "position:absolute;visibility:hidden;animation:none"; sg.appendChild(d); h += d.offsetHeight - 2; d.remove();
+  });
+  stageFull = Math.max(220, h + 18 + 96); // 18 = 下の余白と枠、96 = 星とひとことの場所
+}
+// 積んでいる間は、いま積んだ分＋次の1枚の場所だけ（条件が画面から押し出されないように）。できあがったら全体
+var stageFull = 350;
+function sizeStage() {
+  var sg = $("stage"), h = 0;
+  if (!done) sg.querySelectorAll(".ly").forEach(function (e) { h += e.offsetHeight - 2; });
+  sg.style.height = (done ? stageFull : Math.min(stageFull, Math.max(150, h + 18 + 70))) + "px";
+}
+function begin(p) {
+  dailyShare = weeklyShare = null;
+  cur = p; stack = []; left = p.items.slice(); done = false; judged = null; hintAt = hintIng = null; usedHint = false; tries = 0; drawn = 0;
+  $("title").hidden = true; $("play").hidden = false; $("after").hidden = true;
   $("stage").querySelectorAll(".stars,.confetti").forEach(function (e) { e.remove(); });
+  $("guide").hidden = rec.guided;
+  fitStage(p.items);
   render(true); scrollTo(0, 0);
+}
+function start(i, fromLink) {
+  mode = "level"; lv = i; begin(LEVELS[i]);
+  $("banner").hidden = !fromLink;
+  if (fromLink) $("banner").textContent = "🤝 友だちからの出題です。解けるかな？";
+}
+function startDaily() {
+  mode = "daily"; begin(makeDaily(today()));
+  $("banner").hidden = !dailyDone();
+  if (dailyDone()) $("banner").textContent = "きょうの分はクリア済み（★" + rec.log[cur.daily] + "）。もう一度遊べます";
+}
+var exLv = 0, exCache = {};
+// おかわりは作るのに少し時間がかかる（達人で最大0.2秒ほど）ので、次の問題を手のあいたときに先に作っておく
+function extraOf(l, k) { var key = l + ":" + k; if (!exCache[key]) exCache[key] = makeExtra(l, k); return exCache[key]; }
+function prefetchExtra(l, k) { var f = function () { extraOf(l, k); }; if (window.requestIdleCallback) requestIdleCallback(f, { timeout: 2000 }); else setTimeout(f, 300); }
+function thisWeek() { return weekOf(today()); }
+// 特大は作るのに少し時間がかかる（具8枚）ので、週ごとに1回だけ作って覚える
+var weeklyCache = {};
+function weeklyOf(w) { return weeklyCache[w] || (weeklyCache[w] = makeWeekly(w)); }
+function weeklyDone(w) { if (w === undefined) w = thisWeek(); return rec.wlog[w] > 0; }
+function startWeekly() {
+  mode = "weekly"; begin(weeklyOf(thisWeek()));
+  $("banner").hidden = !weeklyDone();
+  if (weeklyDone()) $("banner").textContent = "今週の分はクリア済み（★" + rec.wlog[thisWeek()] + "）。もう一度遊べます";
+}
+function startExtra(l) {
+  mode = "extra"; exLv = l; begin(extraOf(l, ex(l).n));
+  $("banner").hidden = true;
 }
 function layer(t, cls) { var d = document.createElement("button"); d.type = "button"; d.className = "ly t-" + t + (cls ? " " + cls : ""); return d; }
 function render(full) {
-  var L = LEVELS[lv];
+  var L = cur;
   $("face").textContent = L.face; $("say").textContent = "「" + L.say + "」";
-  $("lv").textContent = (chapterOf(lv) + 1) + "章 お客さん " + (lv % PER + 1) + " / " + PER;
-  var dh = ""; for (var i = chapterOf(lv) * PER; i < (chapterOf(lv) + 1) * PER; i++) dh += '<i class="' + (i === lv ? "cur" : stars(i) ? "done" : "") + '"></i>';
-  $("dots").innerHTML = dh;
+  if (mode === "daily") { $("lv").textContent = "きょうのわがまま"; $("dots").innerHTML = ""; }
+  else if (mode === "weekly") { $("lv").textContent = "今週の特大わがまま"; $("dots").innerHTML = ""; }
+  else if (mode === "extra") { $("lv").textContent = "おかわり・" + EXTRA[exLv].name + "（ノーミス " + ex(exLv).run + "連続中）"; $("dots").innerHTML = ""; }
+  else {
+    $("lv").textContent = (chapterOf(lv) + 1) + "章 お客さん " + (lv % PER + 1) + " / " + PER;
+    var dh = ""; for (var i = chapterOf(lv) * PER; i < (chapterOf(lv) + 1) * PER; i++) dh += '<i class="' + (i === lv ? "cur" : stars(i) ? "done" : "") + '"></i>';
+    $("dots").innerHTML = dh;
+  }
   $("conds").innerHTML = L.conds.map(function (c, k) {
     var st = judged ? (judged[k] ? "ok" : "ng") : "";
-    return '<li class="' + st + (isNewCond(lv, c) ? " newc" : "") + '"><b>' + (st === "ok" ? "✓" : st === "ng" ? "✗" : "・") + "</b>" + condText(c) + "</li>";
+    return '<li class="' + st + (isNewCond(c) ? " newc" : "") + '"><b aria-label="' + (st === "ok" ? "守れた" : st === "ng" ? "守れていない" : "") + '">' + (st === "ok" ? "✓" : st === "ng" ? "✗" : "・") + "</b><span>" + condHtml(c) + "</span></li>";
   }).join("");
   var sg = $("stage"); sg.querySelectorAll(".ly").forEach(function (e) { e.remove(); });
   var b = layer("bun-b"); b.style.animation = "none"; b.tabIndex = -1; b.setAttribute("aria-label", "下のパン"); sg.appendChild(b);
@@ -202,75 +478,170 @@ function render(full) {
   });
   if (done) { var tp = layer("bun-t"); tp.tabIndex = -1; tp.setAttribute("aria-label", "上のパン"); if (drawn > stack.length) tp.style.animation = "none"; sg.appendChild(tp); drawn = stack.length + 1; }
   else drawn = stack.length;
+  sizeStage();
   var cnt = {}; left.forEach(function (t) { cnt[t] = (cnt[t] || 0) + 1; });
   $("tray").innerHTML = "";
-  Object.keys(cnt).forEach(function (t) {
+  Object.keys(cnt).forEach(function (t, ki) {
     var e = document.createElement("button"); e.className = "ing" + (hintIng === t ? " hint" : ""); e.dataset.t = t;
-    e.innerHTML = '<span class="ly t-' + t + '"></span>' + ING[t] + (cnt[t] > 1 ? " ×" + cnt[t] : "");
+    e.setAttribute("aria-label", ING[t] + "をのせる" + (cnt[t] > 1 ? "（残り" + cnt[t] + "）" : ""));
+    if (ki < 9) { e.setAttribute("aria-keyshortcuts", String(ki + 1)); e.style.position = "relative"; }
+    e.innerHTML = (ki < 9 ? '<span class="k" aria-hidden="true">' + (ki + 1) + "</span>" : "") + '<span class="ly t-' + t + '"></span>' + ING[t] + (cnt[t] > 1 ? " ×" + cnt[t] : "");
     e.onclick = function () { add(t); }; $("tray").appendChild(e);
   });
-  $("note").textContent = done ? "" : lv === 0 && !stack.length ? "下から順にタップして積む。積んだ具はタップで外せる" : left.length ? "" : "積めたら「できあがり！」";
+  $("note").textContent = done ? (mode === "daily" ? "次のきょうのわがまままで " + untilNext() : "") : !stack.length ? "下から順にタップして積む。積んだ具はタップで外せる" : left.length ? "" : "積めたら「できあがり！」";
   var g = $("go"); g.disabled = !done && left.length > 0;
-  g.textContent = done ? (lv < LEVELS.length - 1 ? "次のお客さん ▶" : "全員クリア！タイトルへ") : "できあがり！";
+  g.innerHTML = done ? (mode === "daily" || mode === "weekly" ? "タイトルへ" : mode === "extra" ? "次のおかわり ▶" : lv < LEVELS.length - 1 ? "次のお客さん ▶" : "全員クリア！タイトルへ")
+    : left.length ? 'できあがり！ <span class="left">（あと' + left.length + "個）</span>" : "できあがり！";
   $("undo").disabled = !stack.length || done; $("hint").disabled = done; $("retry").disabled = !stack.length;
+  $("after").hidden = !done; $("shareQ").hidden = mode !== "level"; $("sub").hidden = done;
+  if (!done) kofiShow = false;
+  $("kofi").hidden = !(done && kofiShow);
 }
 function toast(s) { var t = $("toast"); t.textContent = s; t.classList.add("on"); clearTimeout(toast.h); toast.h = setTimeout(function () { t.classList.remove("on"); }, 1800); }
-function add(t) { if (done) return; var i = left.indexOf(t); if (i < 0) return; left.splice(i, 1); stack.push(t); judged = null; hintAt = hintIng = null; SND.put(); render(); }
+function add(t) { if (done) return; var i = left.indexOf(t); if (i < 0) return; left.splice(i, 1); stack.push(t); judged = null; hintAt = hintIng = null; SND.put(); buzz(8); render(); showStack(); }
+// 下に止まる具材の棚（.dock）の後ろに、積んだバーガーが隠れないよう、台の下の端を棚のすぐ上まで送る
+// 台の高さが伸びる動き（0.2秒）が終わってから測る
+function showStack() {
+  clearTimeout(showStack.h);
+  showStack.h = setTimeout(function () {
+    var s = $("stage").getBoundingClientRect(), d = $("dock").getBoundingClientRect(), gap = s.bottom - d.top + 6;
+    if (gap > 0) scrollBy({ top: gap, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  }, 230);
+}
 function remove(i) { if (done) return; left.push(stack[i]); stack.splice(i, 1); judged = null; hintAt = hintIng = null; drawn = i; SND.off(); render(); }
 function confetti() {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
   var cs = ["#f5b800", "#e8572a", "#4caf2c", "#d4302a", "#fff"];
   for (var k = 0; k < 28; k++) { var c = document.createElement("i"); c.className = "confetti"; c.style.left = (Math.random() * 100) + "%"; c.style.background = cs[k % cs.length]; c.style.animationDelay = (Math.random() * 0.4) + "s"; $("stage").appendChild(c); }
 }
+// d は解いた問題の日（日付をまたいで解いても、その問題の日として記録する）
+// 1日1回：カレンダーにその日の星が無いときだけ書く。あとから前の日を解いても、その日の分として入る
+function recordDaily(n, d) {
+  if (d === undefined) d = today();
+  if (dailyDone(d)) return;
+  rec.log[d] = n;
+  if (!rec.daily || d >= rec.daily.day) rec.daily = { day: d, solved: true, stars: n, tries: tries, hint: usedHint };
+  /* 古い日も消さない（消すと連続日数が上限で止まる）。1日あたり数バイトなので残してよい */
+  fixStreak(rec);
+}
+// おかわり：解くたびに次の問題へ。★3（一発・ヒントなし）が続いた数を数える
+function recordExtra(n) {
+  var x = ex(exLv); x.n += 1;
+  if (n === 3) { x.run += 1; x.perfect = (x.perfect || 0) + 1; } else x.run = 0;
+  x.best = Math.max(x.best, x.run);
+}
 function finish() {
-  if (done) { if (lv < LEVELS.length - 1) start(lv + 1); else showTitle(); return; }
+  if (done) {
+    if (mode === "daily" || mode === "weekly") return showTitle();
+    if (mode === "extra") return startExtra(exLv);
+    if (lv < LEVELS.length - 1) start(lv + 1); else showTitle(); return;
+  }
   if (left.length) return;
-  var L = LEVELS[lv], r = check(stack, L.conds); tries++; judged = r;
+  var r = check(stack, cur.conds); tries++; judged = r;
   if (r.every(Boolean)) {
     done = true;
-    var n = usedHint ? 1 : tries === 1 ? 3 : 2;
-    var first = !stars(lv);
-    rec.best[lv] = Math.max(stars(lv), n); save();
-    render(); SND.win(); confetti();
-    var st = document.createElement("div"); st.className = "stars";
+    var n = usedHint ? 1 : tries === 1 ? 3 : 2; lastStars = n;
+    var first;
+    if (mode === "daily") { first = !dailyDone(cur.daily); recordDaily(n, cur.daily); }
+    else if (mode === "weekly") { first = !weeklyDone(cur.weekly); if (first) rec.wlog[cur.weekly] = n; weeklyShare = { week: cur.weekly, stars: n, tries: tries, hint: usedHint }; }
+    else if (mode === "extra") { first = true; recordExtra(n); prefetchExtra(exLv, ex(exLv).n); }
+    else { first = !stars(lv); rec.best[lv] = Math.max(stars(lv), n); }
+    kofiShow = mode === "level" && first && (lv + 1) % PER === 0;
+    var got = newBadges(); save();
+    if (got.length) setTimeout(function () { toast("🏅 実績：" + got.map(function (b) { return b[1] + b[2]; }).join("・")); }, mode === "level" && first && (lv + 1) % PER === 0 ? 3800 : 1900);
+    // 結果画面のシェアは、いま解いた日の記録で（別のタブが先にその日を解いていたら、その記録）
+    if (mode === "daily") dailyShare = rec.daily && rec.daily.day === cur.daily ? rec.daily : { day: cur.daily, solved: true, stars: rec.log[cur.daily] || n, tries: tries, hint: usedHint };
+    render(); showStack();
+    // 上のパンがのった瞬間に、全体がぎゅっとつぶれて戻る（できあがりの手ごたえ）
+    setTimeout(function () { var sg = $("stage"); sg.classList.add("squash"); setTimeout(function () { sg.classList.remove("squash"); }, 320); }, 300);
+    SND.win(); buzz([20, 40, 20]); confetti();
+    var st = document.createElement("div"); st.className = "stars"; st.setAttribute("aria-label", "星" + n + "つ");
     st.innerHTML = [0, 1, 2].map(function (k) { return '<span class="' + (k < n ? "" : "off") + '" style="animation-delay:' + (0.2 + k * 0.15) + 's">★</span>'; }).join("");
     $("stage").appendChild(st);
     $("face").style.transform = "scale(1.25)"; setTimeout(function () { $("face").style.transform = ""; }, 600);
-    toast(WIN[lv % WIN.length]);
-    if (first && (lv + 1) % PER === 0) setTimeout(function () { toast((chapterOf(lv) + 1) + "章クリア！"); }, 1900);
+    toast(mode === "daily" && first ? "🔥 " + rec.streak.n + "日連続！" : mode === "extra" && ex(exLv).run >= 2 ? "ノーミス " + ex(exLv).run + "連続！" : WIN[(mode === "daily" ? today() : lv) % WIN.length]);
+    if (mode === "level" && first && (lv + 1) % PER === 0) setTimeout(function () { toast((chapterOf(lv) + 1) + "章クリア！"); }, 1900);
     return;
   }
-  render(); SND.ng();
+  render(); SND.ng(); buzz(60);
   $("face").style.transform = "rotate(-12deg)"; setTimeout(function () { $("face").style.transform = ""; }, 600);
   toast(LOSE[Math.floor(Math.random() * LOSE.length)]);
 }
 function hint() {
   if (done) return;
-  var ans = LEVELS[lv].answer, i = 0; while (i < stack.length && stack[i] === ans[i]) i++;
+  var ans = cur.answer, i = 0; while (i < stack.length && stack[i] === ans[i]) i++;
   // 全部正しく積めているときはヒントを使ったことにしない（星が減らないように）
   if (i === ans.length) { toast("もう完成！「できあがり！」を押して"); return; }
   usedHint = true;
   if (i < stack.length) { hintAt = i; hintIng = null; render(); toast("下から" + (i + 1) + "番目を見直して"); }
   else { hintAt = null; hintIng = ans[i]; render(); toast("次は" + ING[ans[i]]); }
 }
-function shareText() { return "🍔 わがままバーガー\nお客さん " + clearedCount() + "/" + LEVELS.length + " 人クリア ★" + total() + "\n" + location.href.split("#")[0].split("?")[0]; }
-function share() {
-  var t = shareText();
-  if (navigator.share) { navigator.share({ text: t }).catch(function () {}); return; }
-  if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () { alertLite("コピーしました"); }, function () { alertLite(t); });
-  else alertLite(t);
-}
-function alertLite(s) { var b = $("share1"); var o = b.textContent; b.textContent = s.length > 20 ? "コピーできませんでした" : s; setTimeout(function () { b.textContent = o; }, 1500); }
 
+// --- シェア（答えは書かない。遊ぶ人が自分で押したときだけ、端末の共有画面かコピーを使う）---
+function starStr(n) { return "★★★☆☆☆".slice(3 - n, 6 - n); }
+function triesStr(t, h) { var a = []; for (var i = 1; i < t; i++) a.push("🟥"); a.push("🟩"); return (h ? "💡" : "") + a.join(""); }
+function shareText(kind) {
+  var dd = kind === "daily" ? (dailyShare || (rec.daily && rec.daily.solved ? rec.daily : null)) : null;
+  if (dd) {
+    return "🍔 きょうのわがまま #" + (dd.day + 1) + "\n" + triesStr(dd.tries, dd.hint) + " " + starStr(dd.stars) + (streakNow() > 1 ? "\n🔥 " + streakNow() + "日連続" : "") + "\n" + SITE + "\n" + TAG;
+  }
+  if (kind === "weekly" && weeklyShare) {
+    var ws = rec.wlog[weeklyShare.week] && rec.wlog[weeklyShare.week] !== weeklyShare.stars ? { stars: rec.wlog[weeklyShare.week], tries: 0 } : weeklyShare;
+    return "🍔 今週の特大わがまま #" + (weeklyShare.week + 1) + "（具8枚）\n" + (ws.tries ? triesStr(ws.tries, ws.hint) + " " : "") + starStr(ws.stars) + "\n" + SITE + "\n" + TAG;
+  }
+  if (kind === "extra") { var x = ex(exLv); return "🍔 わがままバーガー おかわり・" + EXTRA[exLv].name + " " + x.n + "問目\n" + triesStr(tries, usedHint) + " " + starStr(lastStars) + (x.run > 1 ? "\n✨ ノーミス " + x.run + "連続" : "") + "\n" + SITE + "\n" + TAG; }
+  if (kind === "challenge") return "🍔 この注文、解ける？\n" + LEVELS[lv].face + " お客さん" + (lv + 1) + "（条件" + LEVELS[lv].conds.length + "つ）\n" + SITE + "?q=" + (lv + 1) + "\n" + TAG;
+  if (kind === "level") return "🍔 わがままバーガー お客さん" + (lv + 1) + " " + starStr(lastStars) + "\nこの注文、解ける？\n" + SITE + "?q=" + (lv + 1) + "\n" + TAG;
+  return "🍔 わがままバーガー\nお客さん " + clearedCount() + "/" + LEVELS.length + " 人クリア ★" + total() + (streakNow() ? "\n🔥 きょうのわがまま " + streakNow() + "日連続" : "") + "\n" + SITE + "\n" + TAG;
+}
+function share(kind, btn) {
+  var t = shareText(kind);
+  if (navigator.share) { navigator.share({ text: t }).catch(function () {}); return; }
+  if (navigator.clipboard) navigator.clipboard.writeText(t).then(function () { flash(btn, "コピーしました"); }, function () { flash(btn, "コピーできませんでした"); });
+  else flash(btn, "コピーできませんでした");
+}
+// 元の文言はボタンに1回だけ覚え、続けて押してもタイマーは1つにする（「コピーしました」のまま残らないように）
+function flash(b, s) {
+  if (b.dataset.o === undefined) b.dataset.o = b.innerHTML;
+  b.textContent = s; clearTimeout(b.flashT);
+  b.flashT = setTimeout(function () { b.innerHTML = b.dataset.o; delete b.dataset.o; }, 1500);
+}
+
+// --- ホーム画面に追加（対応するブラウザだけ。押したときだけ出す）---
+var installEv = null;
+addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); installEv = e; $("install").hidden = false; });
+$("install").onclick = function () { if (!installEv) return; installEv.prompt(); installEv = null; $("install").hidden = true; };
+
+// キーボードでも遊べる：数字＝具材をのせる、Enter＝できあがり／次へ、Backspace・Z＝ひとつ戻す、H＝ヒント、Esc＝もどる
+document.addEventListener("keydown", function (e) {
+  if ($("play").hidden || e.ctrlKey || e.metaKey || e.altKey) return;
+  var k = e.key, a = document.activeElement;
+  if (/^[1-9]$/.test(k)) { var b = $("tray").querySelectorAll(".ing")[+k - 1]; if (b) { b.click(); e.preventDefault(); } }
+  else if (k === "Enter") { if (a && a !== document.body && (a.tagName === "BUTTON" || a.tagName === "A" || a.tagName === "SUMMARY")) return; /* ボタン・リンクは自分の動きにまかせる */ if (!$("go").disabled) { finish(); e.preventDefault(); } }
+  else if (k === "Backspace" || k === "z" || k === "Z") { if (stack.length && !done) { remove(stack.length - 1); e.preventDefault(); } }
+  else if (k === "h" || k === "H") { hint(); }
+  else if (k === "Escape") { showTitle(); }
+});
 $("go").onclick = finish;
 $("undo").onclick = function () { if (stack.length && !done) remove(stack.length - 1); };
 // やり直しても、この人への挑戦の回数とヒントは数えたまま（星の数がやり直しで増えないように）
-$("retry").onclick = function () { if (done) return start(lv); left = LEVELS[lv].items.slice(); stack = []; judged = null; hintAt = hintIng = null; drawn = 0; render(true); };
+$("retry").onclick = function () { if (done) return; left = cur.items.slice(); stack = []; judged = null; hintAt = hintIng = null; drawn = 0; render(true); };
 $("hint").onclick = hint;
 $("back").onclick = showTitle;
 $("sound1").onclick = $("sound2").onclick = toggleSound;
-$("share1").onclick = share;
-soundIcon(); showTitle();
+$("share1").onclick = function () { share("total", $("share1")); };
+$("shareQ").onclick = function () { share("challenge", $("shareQ")); };
+$("shareR").onclick = function () { share(mode === "level" ? "level" : mode, $("shareR")); };
+$("dailyBtn").onclick = startDaily;
+$("weeklyBtn").onclick = startWeekly;
+$("cont").onclick = function () { start(nextLevel()); };
+$("guideOk").onclick = function () { rec.guided = true; save(); $("guide").hidden = true; };
+soundIcon();
+// 出題リンク（?q=番号）で開いたら、その人の注文から始める（まだ開いていない人でも遊べる）
+var q = +(new URLSearchParams(location.search).get("q") || 0);
+if (q >= 1 && q <= LEVELS.length && Math.floor(q) === q) start(q - 1, true); else showTitle();
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(function () {});
 // 検査（qa/run.mjs）用の窓口
-window.__game = { start: start, add: add, finish: finish, showTitle: showTitle, get state() { return { lv: lv, stack: stack.slice(), left: left.slice(), done: done, judged: judged, stars: stars(lv) }; } };
+window.__game = { recordDaily: recordDaily, startWeekly: startWeekly, thisWeek: thisWeek, untilNext: untilNext, mergeRec: mergeRec, BADGES: BADGES, exCached: function (l, k) { return !!exCache[l + ":" + k]; }, start: start, startDaily: startDaily, startExtra: startExtra, rec: function () { return JSON.parse(JSON.stringify(rec)); }, add: add, finish: finish, showTitle: showTitle, shareText: shareText, flash: flash, setToday: function (d) { todayOverride = d; },
+  get state() { return { lv: lv, mode: mode, stack: stack.slice(), left: left.slice(), done: done, judged: judged, stars: mode === "daily" ? (rec.log[today()] || 0) : mode === "weekly" ? (rec.wlog[thisWeek()] || 0) : mode === "extra" ? (done ? lastStars : 0) : stars(lv), streak: streakNow(), cur: cur }; } };
 </script></body></html>
