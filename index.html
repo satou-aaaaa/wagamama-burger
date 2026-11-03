@@ -617,7 +617,7 @@ document.addEventListener("keydown", function (e) {
   if ($("play").hidden || e.ctrlKey || e.metaKey || e.altKey) return;
   var k = e.key, a = document.activeElement;
   if (/^[1-9]$/.test(k)) { var b = $("tray").querySelectorAll(".ing")[+k - 1]; if (b) { b.click(); e.preventDefault(); } }
-  else if (k === "Enter") { if (a && a !== document.body && a.tagName === "BUTTON") return; if (!$("go").disabled) { finish(); e.preventDefault(); } }
+  else if (k === "Enter") { if (a && a !== document.body && (a.tagName === "BUTTON" || a.tagName === "A" || a.tagName === "SUMMARY")) return; /* ボタン・リンクは自分の動きにまかせる */ if (!$("go").disabled) { finish(); e.preventDefault(); } }
   else if (k === "Backspace" || k === "z" || k === "Z") { if (stack.length && !done) { remove(stack.length - 1); e.preventDefault(); } }
   else if (k === "h" || k === "H") { hint(); }
   else if (k === "Escape") { showTitle(); }

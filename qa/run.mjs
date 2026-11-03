@@ -433,13 +433,24 @@ try {
     small.push(...(await pq.evaluate(() => [...document.querySelectorAll("button, a, summary")].filter((b) => b.offsetParent && !b.classList.contains("ly")).map((b) => { const r = b.getBoundingClientRect(); return { n: b.id || b.className || b.textContent.trim().slice(0, 8), w: r.width, h: r.height }; }).filter((r) => r.h < 48 || r.w < 48).map((r) => `${r.n}:${Math.round(r.w)}x${Math.round(r.h)}`))));
   }
   check("ボタンは指で押しやすい大きさ（48px 以上）", small.length === 0, small.join(" "));
+  // できあがりのあと、キーボードで「感想を送る」リンクに合わせて Enter を押しても、次へ進まない（リンクの動きにまかせる）
+  const enterLink = await pq.evaluate(() => {
+    __game.start(0); __game.state.cur.answer.forEach((t) => __game.add(t)); __game.finish();
+    const lv0 = __game.state.lv, a = document.querySelector("#after a.fb"); a.addEventListener("click", (e) => e.preventDefault(), { once: true }); a.focus();
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    return { stillDone: __game.state.done, lv: __game.state.lv === lv0 };
+  });
+  check("できあがりのあと「感想を送る」に合わせて Enter を押しても、次のお客さんへ進まない", enterLink.stillDone && enterLink.lv, JSON.stringify(enterLink));
   await pq.close();
+  check("出題リンク・記録・遊ぶ画面の確かめでページのエラーが無い", errors.length === 0, errors.join(" / "));
   // 動きを減らす設定の人には、紙吹雪を出さない
   const pr = await browser.newPage({ viewport: { width: 390, height: 800 }, reducedMotion: "reduce" });
+  pr.on("pageerror", (e) => errors.push(e.message));
   await pr.goto(url); await pr.evaluate(() => __game.start(0));
   for (const t of LEVELS[0].answer) await pr.click(`.ing[data-t="${t}"]`); await pr.click("#go");
   check("動きを減らす設定では紙吹雪を出さない", (await pr.locator(".confetti").count()) === 0 && (await pr.evaluate(() => __game.state.done)));
   await pr.close();
+  check("動きを減らす設定の確かめでページのエラーが無い", errors.length === 0, errors.join(" / "));
 
   // 8. スマホ幅（320・390）で横にはみ出さず、具材7個でも上のパンが台の中に収まる
   const wide = [];
