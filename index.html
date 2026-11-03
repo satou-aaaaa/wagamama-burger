@@ -194,8 +194,9 @@ try {
 function mergeRec(a, b) {
   if (!b || typeof b !== "object") return a;
   if (Array.isArray(b.best)) b.best.forEach(function (v, i) { if ((v || 0) > (a.best[i] || 0)) a.best[i] = v; });
-  if (b.log && typeof b.log === "object") Object.keys(b.log).forEach(function (d) { a.log[d] = Math.max(a.log[d] || 0, b.log[d] || 0); });
-  if (b.daily && typeof b.daily.day === "number" && (!a.daily || b.daily.day > a.daily.day)) a.daily = b.daily;
+  // きょうのわがままは1日1回。同じ日は先に保存した結果（別のタブが先に解いた結果）を残す
+  if (b.log && typeof b.log === "object") Object.keys(b.log).forEach(function (d) { if (b.log[d]) a.log[d] = b.log[d]; });
+  if (b.daily && typeof b.daily.day === "number" && (!a.daily || b.daily.day >= a.daily.day)) a.daily = b.daily;
   if (b.streak && typeof b.streak.n === "number") {
     if (b.streak.last > a.streak.last || (b.streak.last === a.streak.last && b.streak.n > a.streak.n)) a.streak = { last: b.streak.last, n: b.streak.n, max: a.streak.max };
     a.streak.max = Math.max(a.streak.max || 0, b.streak.max || 0);

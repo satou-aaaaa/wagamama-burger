@@ -313,6 +313,13 @@ try {
     return __game.mergeRec(a, { extra: [{ n: 5, run: 5, best: 5, perfect: 5 }] }).extra[0];
   });
   check("おかわりの記録を合わせるとき、ノーミス最高と★3の数は大きいほうを残す", mergedEx.n === 6 && mergedEx.run === 1 && mergedEx.best === 5 && mergedEx.perfect === 5, JSON.stringify(mergedEx));
+  // 同じ日を2つのタブで解いたら、先に保存した結果を残す（共有の星とカレンダーがそろう。2026-11-03 CodeRabbit 指摘）
+  const sameDay = await pq.evaluate(() => {
+    const a = { best: [], log: { 41: 3 }, daily: { day: 41, solved: true, stars: 3 }, streak: { last: 41, n: 1, max: 1 }, extra: [], guided: false };
+    const r = __game.mergeRec(a, { log: { 41: 2, 40: 1 }, daily: { day: 41, solved: true, stars: 2 } });
+    return [r.daily.stars, r.log[41], r.log[40]];
+  });
+  check("同じ日のきょうのわがままは、先に保存した結果を残す（星とカレンダーがそろう）", sameDay.join() === "2,2,1", sameDay.join());
   // 押す所の大きさ（指で押す所は 48px 以上。積んだ具材と条件の中の絵は除く）
   const small = [];
   for (const view of ["title", "play"]) {
