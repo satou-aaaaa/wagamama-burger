@@ -82,9 +82,18 @@ function makeExtra(level, k) {
   p.face = DAILY_FACES[(k * 7 + level * 3) % DAILY_FACES.length]; p.say = (k + 1) + "問目"; p.extra = level; p.k = k;
   return p;
 }
+// 週の番号（月曜はじまり。2026-11-03 の週が 0）と、その週の特大わがまま（具8枚。どの端末でも同じ）
+function weekOf(day) { return Math.floor((day + 1) / 7); }
+var WEEKLY_FACES = ["🦁", "🐘", "🦒", "🐻‍❄️", "🦓", "🐳", "🦩", "🦔"];
+function makeWeekly(week) {
+  var p = genPuzzle(rng(880000 + week * 7919), 8, 5, 7);
+  if (!p) return null;
+  p.face = WEEKLY_FACES[week % WEEKLY_FACES.length]; p.say = "今週の特大わがまま #" + (week + 1); p.weekly = week;
+  return p;
+}
 // 日本時間の日付から日の番号を出す（2026-11-03 が 0）
 function dayNumber(date) {
   var jst = (date || new Date()).getTime() + 9 * 3600 * 1000;
   return Math.floor(jst / 86400000) - Math.floor(Date.UTC(2026, 10, 3) / 86400000);
 }
-if (typeof module !== "undefined") module.exports = { ING: ING, COND: COND, check: check, condText: condText, perms: perms, answers: answers, makeDaily: makeDaily, makeExtra: makeExtra, EXTRA: EXTRA, genPuzzle: genPuzzle, dayNumber: dayNumber, rng: rng };
+if (typeof module !== "undefined") module.exports = { ING: ING, COND: COND, check: check, condText: condText, perms: perms, answers: answers, makeDaily: makeDaily, makeExtra: makeExtra, makeWeekly: makeWeekly, weekOf: weekOf, EXTRA: EXTRA, genPuzzle: genPuzzle, dayNumber: dayNumber, rng: rng };

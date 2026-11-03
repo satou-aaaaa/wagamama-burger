@@ -9,7 +9,7 @@ import path from "node:path";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
-const { answers, check: judge, condText, perms, makeDaily, makeExtra, EXTRA, dayNumber, ING } = require(path.join(root, "rules.js"));
+const { answers, check: judge, condText, perms, makeDaily, makeExtra, makeWeekly, weekOf, EXTRA, dayNumber, ING } = require(path.join(root, "rules.js"));
 const { LEVELS, CHAPTERS } = require(path.join(root, "levels.js"));
 const url = "file://" + path.join(root, "index.html");
 const results = [];
@@ -79,6 +79,16 @@ for (let l = 0; l < EXTRA.length; l++) {
   }
 }
 check("おかわり：3つの難しさ×150問すべて答えが1つ・要らない条件なし・同じ番号は同じ問題・重複なし", xBad.length === 0, xBad.slice(0, 5).join(","));
+// 1d. 今週の特大わがまま：156週（3年分）。具8枚・条件5〜7・答えが1つ・要らない条件なし・同じ週は同じ問題・重複なし。週は月曜はじまり
+const wBad = [], wSeen = new Set();
+for (let w = 0; w < 156; w++) {
+  const L = makeWeekly(w), L2 = makeWeekly(w), key = L && JSON.stringify([L.items, L.conds]);
+  if (!L || L.items.length !== 8 || answers(L.items, L.conds).length !== 1 || answers(L.items, L.conds)[0].join() !== L.answer.join() || key !== JSON.stringify([L2.items, L2.conds]) || wSeen.has(key)
+    || L.conds.some((_, c) => answers(L.items, L.conds.filter((__, j) => j !== c)).length === 1) || L.conds.length < 5 || L.conds.length > 7 || L.conds.some((c) => condText(c).length > 18)) wBad.push(w);
+  wSeen.add(key);
+}
+check("今週の特大わがまま：3年分すべて具8枚・答えが1つ・要らない条件なし・同じ週は同じ問題・重複なし", wBad.length === 0, wBad.slice(0, 5).join(","));
+check("週は月曜はじまり（11/3火は0週、11/9月から1週）", weekOf(0) === 0 && weekOf(5) === 0 && weekOf(6) === 1 && weekOf(12) === 1 && weekOf(13) === 2);
 check("日の番号は日本時間の0時で変わる（2026-11-03 が #1）", dayNumber(new Date("2026-11-02T23:59:00+09:00")) === -1 && dayNumber(new Date("2026-11-03T00:00:00+09:00")) === 0 && dayNumber(new Date("2026-11-03T23:59:00+09:00")) === 0 && dayNumber(new Date("2026-11-04T00:00:00+09:00")) === 1);
 const html = readFileSync(path.join(root, "index.html"), "utf8");
 const og = (p) => (html.match(new RegExp(`<meta (?:property|name)="${p}" content="([^"]+)"`)) || [])[1];
@@ -372,10 +382,10 @@ try {
     const saved = JSON.parse(localStorage.getItem("wagamamaBurger1"));
     return { toast, badges: saved.badges, head: document.querySelector(".badges")?.previousElementSibling?.textContent, locked: document.querySelectorAll(".badges li:not(.on)").length, lockedText: document.querySelector(".badges li:not(.on)")?.textContent };
   });
-  check("初めて満足させると実績「はじめての一品」が付き、知らせと記録帳（取った数・まだの条件）に出る", /はじめての一品/.test(badge1.toast) && JSON.stringify(badge1.badges) === '["first"]' && /実績 1\//.test(badge1.head) && badge1.locked === 15 && /🔒/.test(badge1.lockedText), JSON.stringify(badge1));
+  check("初めて満足させると実績「はじめての一品」が付き、知らせと記録帳（取った数・まだの条件）に出る", /はじめての一品/.test(badge1.toast) && JSON.stringify(badge1.badges) === '["first"]' && /実績 1\//.test(badge1.head) && badge1.locked === 17 && /🔒/.test(badge1.lockedText), JSON.stringify(badge1));
   // 実績の条件は、記録がそろえば全部取れる（取れない実績が無い）。タブを合わせても取った実績は消えない
   await pq.evaluate(() => {
-    const full = { best: Array(40).fill(3), log: {}, extra: [{ n: 50, run: 0, best: 10, perfect: 50 }, { n: 30, run: 0, best: 3, perfect: 3 }, { n: 20, run: 0, best: 1, perfect: 1 }], streak: { max: 30 }, badges: [] };
+    const full = { best: Array(40).fill(3), log: {}, extra: [{ n: 50, run: 0, best: 10, perfect: 50 }, { n: 30, run: 0, best: 3, perfect: 3 }, { n: 20, run: 0, best: 1, perfect: 1 }], streak: { max: 30 }, badges: [], wlog: { 0: 3, 1: 2, 2: 3, 3: 1 } };
     for (let d = 0; d < 60; d++) full.log[d] = 3;
     localStorage.setItem("wagamamaBurger1", JSON.stringify(full));
   });
@@ -387,7 +397,21 @@ try {
     localStorage.clear();
     return { on, total, m };
   });
-  check("記録がそろえば実績は全部取れ（取れない実績が無い）、タブを合わせても取った実績は消えない", badgeAll.on === badgeAll.total && badgeAll.total === 16 && badgeAll.m.join() === "first,d3", JSON.stringify(badgeAll));
+  check("記録がそろえば実績は全部取れ（取れない実績が無い）、タブを合わせても取った実績は消えない", badgeAll.on === badgeAll.total && badgeAll.total === 18 && badgeAll.m.join() === "first,d3", JSON.stringify(badgeAll));
+  // 今週の特大わがまま：タイトルに出て、解くと週の記録に入り、同じ週の2回目は記録を変えない。シェアに具材の名前を入れない
+  await pq.evaluate(() => localStorage.clear()); await pq.reload(); await pq.waitForLoadState("load");
+  const wk = await pq.evaluate(() => {
+    const out = { btn: !!document.getElementById("weeklyBtn") && document.getElementById("weeklyBtn").offsetParent !== null };
+    __game.setToday(12); __game.showTitle(); out.sub0 = document.getElementById("weeklySub").textContent;
+    __game.startWeekly(); const c = __game.state.cur; out.items = c.items.length; out.week = c.weekly;
+    c.answer.forEach((t) => __game.add(t)); __game.finish(); out.stars = __game.state.stars; out.share = __game.shareText("weekly");
+    __game.startWeekly(); c.answer.slice().reverse().forEach((t) => __game.add(t)); __game.finish(); if (!__game.state.done) { __game.state.cur.answer.forEach(() => {}); }
+    const saved = JSON.parse(localStorage.getItem("wagamamaBurger1")); out.wlog = saved.wlog;
+    __game.showTitle(); out.sub1 = document.getElementById("weeklySub").textContent; out.go = document.getElementById("go").textContent;
+    return out;
+  });
+  const wkLeak = Object.values(ING).filter((n) => wk.share.includes(n));
+  check("今週の特大わがまま：タイトルにあり、具8枚、解くと週の記録に★が入りタイトルにクリア済みと出る。シェアに具材の名前が無い", wk.btn && wk.items === 8 && wk.week === 1 && wk.wlog[1] === 3 && /#2 クリア済み ★3/.test(wk.sub1) && /今週の特大わがまま #2/.test(wk.share) && wkLeak.length === 0, JSON.stringify({ ...wk, wkLeak }));
   // 押す所の大きさ（指で押す所は 48px 以上。積んだ具材と条件の中の絵は除く）
   const small = [];
   for (const view of ["title", "play"]) {
