@@ -276,6 +276,27 @@ try {
   await pq.evaluate(() => { const r = JSON.parse(localStorage.getItem("wagamamaBurger1")); r.best = Array(10).fill(3); localStorage.setItem("wagamamaBurger1", JSON.stringify(r)); });
   await pq.reload();
   check("1章を全員★3にすると、章と記録帳に王冠が付く", /👑/.test(await pq.textContent(".chap h2")) && /1章👑/.test(await pq.textContent("#logBody")));
+  // 改善 2026-11-03：次の問題までの時間・星の分布・キーボード・おかわりの先作り
+  check("次のきょうのわがまままでの時間：日本時間0時の1分前は「0時間1分」、0時ちょうどは「24時間0分」", await pq.evaluate(() => __game.untilNext(Date.UTC(2026, 10, 3, 14, 59)) === "0時間1分" && __game.untilNext(Date.UTC(2026, 10, 3, 15, 0)) === "24時間0分"));
+  await pq.evaluate(() => { __game.setToday(30); __game.showTitle(); });
+  check("きょうの分を解くと、タイトルに「次まで ○時間○分」が出る", /次まで \d+時間\d+分/.test(await pq.textContent("#dailySub")), await pq.textContent("#dailySub"));
+  check("記録帳に、きょうのわがままの星の分布が出る", (await pq.locator("#logBody .dist i").count()) === 3 && /★3/.test(await pq.textContent("#logBody .dist")));
+  await pq.evaluate(() => __game.start(3));
+  const kAns = LEVELS[3].answer;
+  for (const t of kAns) { const idx = await pq.evaluate((t) => [...document.querySelectorAll("#tray .ing")].findIndex((b) => b.dataset.t === t), t); await pq.keyboard.press(String(idx + 1)); }
+  await pq.keyboard.press("Backspace");
+  const kLeft = await pq.evaluate(() => __game.state.left.length);
+  const lastIdx = await pq.evaluate((t) => [...document.querySelectorAll("#tray .ing")].findIndex((b) => b.dataset.t === t), kAns[kAns.length - 1]);
+  await pq.keyboard.press(String(lastIdx + 1)); await pq.evaluate(() => document.activeElement && document.activeElement.blur()); await pq.keyboard.press("Enter");
+  check("キーボードだけで解ける（数字でのせる・Backspaceで戻す・Enterでできあがり）", kLeft === 1 && (await pq.evaluate(() => __game.state.done)));
+  await pq.evaluate(() => __game.startExtra(2));
+  const xk = await pq.evaluate(() => __game.rec().extra[2] ? __game.rec().extra[2].n : 0);
+  const xc = await pq.evaluate(() => __game.state.cur.answer);
+  for (const t of xc) await pq.click(`.ing[data-t="${t}"]`); await pq.click("#go");
+  await pq.waitForTimeout(2500);
+  check("おかわりを解くと、次の問題を先に作っておく（待ち時間なし）", await pq.evaluate((k) => __game.exCached(2, k + 1), xk));
+  await pq.keyboard.press("Escape");
+  check("Esc でタイトルにもどる", await pq.locator("#title").isVisible());
   // 別のタブで新しい日を解いた後に、古いタブで前の日を解いても、新しい記録が消えない（2026-11-03 CodeRabbit 指摘）
   const merged = await pq.evaluate(() => {
     localStorage.clear(); __game.setToday(40); __game.startDaily();
