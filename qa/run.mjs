@@ -382,6 +382,8 @@ try {
     const saved = JSON.parse(localStorage.getItem("wagamamaBurger1"));
     return { toast, badges: saved.badges, head: document.querySelector(".badges")?.previousElementSibling?.textContent, locked: document.querySelectorAll(".badges li:not(.on)").length, lockedText: document.querySelector(".badges li:not(.on)")?.textContent };
   });
+  const goalText = await pq.evaluate(() => { __game.showTitle(); return document.getElementById("goal").textContent; });
+  check("タイトルに次の目標（まだ取っていない実績の条件）が出る", /次の目標：1章を全員クリア/.test(goalText), goalText);
   check("初めて満足させると実績「はじめての一品」が付き、知らせと記録帳（取った数・まだの条件）に出る", /はじめての一品/.test(badge1.toast) && JSON.stringify(badge1.badges) === '["first"]' && /実績 1\//.test(badge1.head) && badge1.locked === 17 && /🔒/.test(badge1.lockedText), JSON.stringify(badge1));
   // 実績の条件は、記録がそろえば全部取れる（取れない実績が無い）。タブを合わせても取った実績は消えない
   await pq.evaluate(() => {
