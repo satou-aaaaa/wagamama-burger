@@ -307,6 +307,12 @@ try {
     return JSON.parse(localStorage.getItem("wagamamaBurger1"));
   });
   check("別のタブの新しい記録（きょう・連続・カレンダー・おかわり・星）を、古いタブの保存で消さない", merged.daily.day === 41 && merged.streak.last === 41 && merged.streak.n === 5 && merged.log[41] === 3 && merged.extra[0].n === 9 && merged.best[0] === 3, JSON.stringify([merged.daily.day, merged.streak, merged.log, merged.extra[0]]));
+  // 解いた数はこのタブが多くても、別のタブのノーミス最高・★3の数は残す（2026-11-03 CodeRabbit 指摘）
+  const mergedEx = await pq.evaluate(() => {
+    const a = { best: [], log: {}, daily: null, streak: { last: -1, n: 0, max: 0 }, extra: [{ n: 6, run: 1, best: 1, perfect: 2 }], guided: false };
+    return __game.mergeRec(a, { extra: [{ n: 5, run: 5, best: 5, perfect: 5 }] }).extra[0];
+  });
+  check("おかわりの記録を合わせるとき、ノーミス最高と★3の数は大きいほうを残す", mergedEx.n === 6 && mergedEx.run === 1 && mergedEx.best === 5 && mergedEx.perfect === 5, JSON.stringify(mergedEx));
   // 押す所の大きさ（指で押す所は 48px 以上。積んだ具材と条件の中の絵は除く）
   const small = [];
   for (const view of ["title", "play"]) {

@@ -200,7 +200,13 @@ function mergeRec(a, b) {
     if (b.streak.last > a.streak.last || (b.streak.last === a.streak.last && b.streak.n > a.streak.n)) a.streak = { last: b.streak.last, n: b.streak.n, max: a.streak.max };
     a.streak.max = Math.max(a.streak.max || 0, b.streak.max || 0);
   }
-  if (Array.isArray(b.extra)) b.extra.forEach(function (x, l) { if (x && typeof x.n === "number" && (!a.extra[l] || x.n > a.extra[l].n)) a.extra[l] = { n: x.n, run: x.run, best: Math.max(x.best || 0, a.extra[l] ? a.extra[l].best : 0), perfect: x.perfect }; });
+  // n と run は解いた数の多いほう。best と perfect は n に関係なく大きいほう（記録を減らさない）
+  if (Array.isArray(b.extra)) b.extra.forEach(function (x, l) {
+    if (!x || typeof x.n !== "number") return;
+    var y = a.extra[l] && typeof a.extra[l].n === "number" ? a.extra[l] : { n: 0, run: 0, best: 0, perfect: 0 };
+    var m = x.n > y.n ? x : y;
+    a.extra[l] = { n: m.n, run: m.run || 0, best: Math.max(x.best || 0, y.best || 0), perfect: Math.max(x.perfect || 0, y.perfect || 0) };
+  });
   a.guided = a.guided || !!b.guided;
   return a;
 }
@@ -501,6 +507,6 @@ var q = +(new URLSearchParams(location.search).get("q") || 0);
 if (q >= 1 && q <= LEVELS.length && Math.floor(q) === q) start(q - 1, true); else showTitle();
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(function () {});
 // 検査（qa/run.mjs）用の窓口
-window.__game = { untilNext: untilNext, exCached: function (l, k) { return !!exCache[l + ":" + k]; }, start: start, startDaily: startDaily, startExtra: startExtra, rec: function () { return JSON.parse(JSON.stringify(rec)); }, add: add, finish: finish, showTitle: showTitle, shareText: shareText, flash: flash, setToday: function (d) { todayOverride = d; },
+window.__game = { untilNext: untilNext, mergeRec: mergeRec, exCached: function (l, k) { return !!exCache[l + ":" + k]; }, start: start, startDaily: startDaily, startExtra: startExtra, rec: function () { return JSON.parse(JSON.stringify(rec)); }, add: add, finish: finish, showTitle: showTitle, shareText: shareText, flash: flash, setToday: function (d) { todayOverride = d; },
   get state() { return { lv: lv, mode: mode, stack: stack.slice(), left: left.slice(), done: done, judged: judged, stars: mode === "daily" ? (rec.daily && rec.daily.day === today() ? rec.daily.stars : 0) : mode === "extra" ? (done ? lastStars : 0) : stars(lv), streak: streakNow(), cur: cur }; } };
 </script></body></html>
