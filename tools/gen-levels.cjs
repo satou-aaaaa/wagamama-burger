@@ -1,7 +1,9 @@
 // 問題（levels.js）を作り直す道具。答えがちょうど1つで、要らない条件の無い問題だけを作る。
 // 使い方: node tools/gen-levels.cjs > /tmp/levels.txt で候補を見て、levels.js に写す（お客さんの台詞は手で書く）。
 const { ING, answers, perms, check, condText } = require("../rules.js");
-let seed = Number(process.argv[2] || 11);
+// 4章だけを作るとき: node tools/gen-levels.cjs ch4（1〜3章は変えない）
+const CH4 = process.argv[2] === "ch4";
+let seed = CH4 ? 404 : Number(process.argv[2] || 11);
 const R = () => { seed = (seed * 1103515245 + 12345) % 2147483648; return seed / 2147483648; };
 const pick = (a) => a[Math.floor(R() * a.length)];
 const KEYS = Object.keys(ING);
@@ -40,6 +42,11 @@ const plan = [
   [4, 2, 3, K3, false, "gap"], [5, 3, 3, K3, false, "gap"], [5, 3, 4, K3, true, "gap"], [5, 3, 4, K3, false], [6, 3, 4, K3, true, "gap"],
   [6, 4, 4, K3, false, "gap"], [6, 4, 5, K3, true], [6, 4, 5, K3, false, "gap"], [7, 4, 5, K3, true], [7, 5, 6, K3, true, "gap"],
 ];
-const out = plan.map((p, i) => { const L = make(...p); if (!L) throw new Error("作れなかった: " + i); return L; });
+// 4章「達人のわがまま」：新しい種類は無し。具材7〜8枚で、全部の種類をまぜる。途中にひと息つける人を入れる
+const plan4 = [
+  [7, 4, 5, K3, true], [7, 4, 5, K3, false, "gap"], [7, 5, 6, K3, true, "same"], [6, 4, 5, K3, true, "notTop"], [7, 5, 6, K3, false],
+  [8, 5, 6, K3, true, "gap"], [7, 5, 6, K3, true, "notBottom"], [8, 5, 7, K3, false], [7, 5, 6, K3, true, "apart"], [8, 6, 7, K3, true, "gap"],
+];
+const out = (CH4 ? plan4 : plan).map((p, i) => { const L = make(...p); if (!L) throw new Error("作れなかった: " + i); return L; });
 out.forEach((L, i) => console.log(String(i + 1).padStart(2), L.items.join(","), "|", L.conds.map(condText).join(" / ")));
 console.log(JSON.stringify(out));

@@ -39,11 +39,10 @@ function rng(seed) {
   };
 }
 var DAILY_FACES = ["🐻", "🐱", "🐧", "🐸", "🐰", "🐶", "🐹", "🐮", "🐵", "🐨", "🐷", "🦊", "🐔", "🐙", "🐼", "🦄", "🐯", "🦉", "🐳", "🦒", "🐢", "🦩", "🦔", "🦝", "🐘"];
-// 日の番号 day（0 = 2026-11-03）から、答えがちょうど1つで要らない条件の無い問題を作る
-function makeDaily(day) {
-  var R = rng(20261103 + day * 7919), pick = function (a) { return a[Math.floor(R() * a.length)]; };
+// 乱数 R から、具材 n 枚・条件 minC〜maxC 個で、答えがちょうど1つで要らない条件の無い問題を作る（作れなければ null）
+function genPuzzle(R, n, minC, maxC) {
+  var pick = function (a) { return a[Math.floor(R() * a.length)]; };
   var keys = Object.keys(ING), kinds = ["bottom", "top", "notTop", "notBottom", "above", "above", "on", "apart", "apart", "same", "same", "gap"];
-  var n = day % 3 === 2 ? 6 : 5;
   for (var tries = 0; tries < 5000; tries++) {
     var items = [];
     while (items.length < n) { var x = pick(keys); if (items.filter(function (y) { return y === x; }).length >= (R() < 0.3 ? 2 : 1)) continue; items.push(x); }
@@ -61,16 +60,31 @@ function makeDaily(day) {
     }
     if (ans.length !== 1) continue;
     for (var i = conds.length - 1; i >= 0; i--) { var rest = conds.filter(function (_, j) { return j !== i; }); if (answers(items, rest).length === 1) conds = rest; }
-    if (conds.length < 3 || conds.length > 5) continue;
+    if (conds.length < minC || conds.length > maxC) continue;
     if (conds.every(function (c2) { return c2[0] === "bottom" || c2[0] === "top"; })) continue;
     if (conds.some(function (c2) { return condText(c2).length > 18; })) continue;
-    return { face: DAILY_FACES[day % DAILY_FACES.length], say: "きょうのわがまま #" + (day + 1), items: items, conds: conds, answer: ans[0], daily: day };
+    return { items: items, conds: conds, answer: ans[0] };
   }
   return null;
+}
+// 日の番号 day（0 = 2026-11-03）から、きょうの問題を作る（どの端末でも同じ）
+function makeDaily(day) {
+  var p = genPuzzle(rng(20261103 + day * 7919), day % 3 === 2 ? 6 : 5, 3, 5);
+  if (!p) return null;
+  p.face = DAILY_FACES[day % DAILY_FACES.length]; p.say = "きょうのわがまま #" + (day + 1); p.daily = day;
+  return p;
+}
+// おかわり（練習問題）：難しさ level（0 ふつう・1 むずかしい・2 達人）の k 問目
+var EXTRA = [{ name: "ふつう", n: 5, min: 3, max: 5 }, { name: "むずかしい", n: 6, min: 4, max: 6 }, { name: "達人", n: 7, min: 4, max: 7 }];
+function makeExtra(level, k) {
+  var e = EXTRA[level], p = genPuzzle(rng(770000 + level * 100003 + k * 7919), e.n, e.min, e.max);
+  if (!p) return null;
+  p.face = DAILY_FACES[(k * 7 + level * 3) % DAILY_FACES.length]; p.say = (k + 1) + "問目"; p.extra = level; p.k = k;
+  return p;
 }
 // 日本時間の日付から日の番号を出す（2026-11-03 が 0）
 function dayNumber(date) {
   var jst = (date || new Date()).getTime() + 9 * 3600 * 1000;
   return Math.floor(jst / 86400000) - Math.floor(Date.UTC(2026, 10, 3) / 86400000);
 }
-if (typeof module !== "undefined") module.exports = { ING: ING, COND: COND, check: check, condText: condText, perms: perms, answers: answers, makeDaily: makeDaily, dayNumber: dayNumber, rng: rng };
+if (typeof module !== "undefined") module.exports = { ING: ING, COND: COND, check: check, condText: condText, perms: perms, answers: answers, makeDaily: makeDaily, makeExtra: makeExtra, EXTRA: EXTRA, genPuzzle: genPuzzle, dayNumber: dayNumber, rng: rng };

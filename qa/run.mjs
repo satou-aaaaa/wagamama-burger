@@ -9,19 +9,19 @@ import path from "node:path";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
-const { answers, check: judge, condText, perms, makeDaily, dayNumber, ING } = require(path.join(root, "rules.js"));
+const { answers, check: judge, condText, perms, makeDaily, makeExtra, EXTRA, dayNumber, ING } = require(path.join(root, "rules.js"));
 const { LEVELS, CHAPTERS } = require(path.join(root, "levels.js"));
 const url = "file://" + path.join(root, "index.html");
 const results = [];
 const check = (name, ok, detail = "") => results.push({ name, ok: !!ok, detail });
 
 // 1. 問題の形（ブラウザを使わない）
-check("お客さんは30人・3章（1章10人）", LEVELS.length === 30 && CHAPTERS.length === 3);
+check("お客さんは40人・4章（1章10人）", LEVELS.length === 40 && CHAPTERS.length === 4);
 const notUnique = LEVELS.map((L, i) => [i, answers(L.items, L.conds)]).filter(([i, a]) => a.length !== 1 || a[0].join() !== LEVELS[i].answer.join());
 check("どの問題も答えがちょうど1つで、answer と合う（全部の並べ方を試す）", notUnique.length === 0, notUnique.map(([i]) => i + 1).join(","));
 const extra = LEVELS.map((L, i) => [i, L.conds.findIndex((_, k) => answers(L.items, L.conds.filter((__, j) => j !== k)).length === 1)]).filter(([, k]) => k >= 0);
 check("要らない条件が無い（どの条件を外しても答えが2つ以上になる）", extra.length === 0, extra.map(([i, k]) => `${i + 1}の${k + 1}つ目`).join(","));
-const KINDS = [["bottom", "top", "notTop", "above", "on"], ["apart", "same", "notBottom"], ["gap"]];
+const KINDS = [["bottom", "top", "notTop", "above", "on"], ["apart", "same", "notBottom"], ["gap"], []];
 const allowed = (ch) => KINDS.slice(0, ch + 1).flat();
 const early = LEVELS.map((L, i) => [i, L.conds.find((c) => !allowed(Math.floor(i / 10)).includes(c[0]))]).filter(([, c]) => c);
 check("まだ習っていない種類の条件が出ない（章ごとに新しいこだわりを1つずつ）", early.length === 0, early.map(([i, c]) => `${i + 1}:${c[0]}`).join(","));
@@ -29,7 +29,10 @@ check("2章・3章は、その章の新しいこだわりを使う問題が半�
 const longT = LEVELS.flatMap((L, i) => L.conds.map((c) => [i, condText(c)])).filter(([, t]) => t.length > 18);
 check("条件の文は18字以内（一目で読める）", longT.length === 0, longT.map(([i, t]) => `${i + 1}:${t}`).join(","));
 check("お客さんの台詞は17字以内", LEVELS.every((L) => [...L.say].length <= 17), LEVELS.filter((L) => [...L.say].length > 17).map((L) => L.say).join(","));
-check("具材は3〜7個・条件は2〜6個（1画面に収まる）", LEVELS.every((L) => L.items.length >= 3 && L.items.length <= 7 && L.conds.length >= 2 && L.conds.length <= 6));
+check("具材は3〜8個・条件は2〜7個（1画面に収まる）", LEVELS.every((L) => L.items.length >= 3 && L.items.length <= 8 && L.conds.length >= 2 && L.conds.length <= 7));
+// 4章（達人）は、それまでの全部の種類を使い、具材は7枚以上が多い（深く遊ぶ人向け）
+const ch4 = LEVELS.slice(30, 40), ch4Kinds = new Set(ch4.flatMap((L) => L.conds.map((c) => c[0])));
+check("4章は全部の種類のこだわりが出て、7枚以上の人が8人以上", KINDS.slice(0, 3).flat().every((k) => ch4Kinds.has(k)) && ch4.filter((L) => L.items.length >= 7).length >= 8, [...ch4Kinds].join(","));
 check("具材の数は後ろほど減らない（章の中で急にやさしくならない）", CHAPTERS.every((_, ch) => { const n = LEVELS.slice(ch * 10, ch * 10 + 10).map((L) => L.items.length); return n.every((x, k) => k === 0 || x >= n[k - 1] - 1); }));
 check("同じ具材は2つまで", LEVELS.every((L) => L.items.every((x) => L.items.filter((y) => y === x).length <= 2)));
 // 判定の決まりを、ランダムな並び 3000 通りで「数え方の違う書き方」と突き合わせる
@@ -63,6 +66,19 @@ for (let d = 0; d < 730; d++) {
 check("きょうのわがまま：730日分すべて答えが1つ・要らない条件なし・同じ日は同じ問題", dBad.length === 0, dBad.slice(0, 5).join(","));
 const days = new Set(Array.from({ length: 60 }, (_, d) => JSON.stringify(makeDaily(d).conds)));
 check("きょうのわがまま：60日続けて同じ問題が出ない", days.size === 60, String(days.size));
+// 1c. おかわり：3つの難しさ × 150問。どれも答えが1つ・要らない条件なし・同じ番号は同じ問題・続けて同じ問題が出ない
+const xBad = [];
+for (let l = 0; l < EXTRA.length; l++) {
+  const seen = new Set();
+  for (let k = 0; k < 150; k++) {
+    const L = makeExtra(l, k), L2 = makeExtra(l, k);
+    const key = L && JSON.stringify([L.items, L.conds]);
+    if (!L || L.items.length !== EXTRA[l].n || answers(L.items, L.conds).length !== 1 || answers(L.items, L.conds)[0].join() !== L.answer.join() || key !== JSON.stringify([L2.items, L2.conds]) || seen.has(key)
+      || L.conds.some((_, c) => answers(L.items, L.conds.filter((__, j) => j !== c)).length === 1) || L.conds.length < EXTRA[l].min || L.conds.length > EXTRA[l].max || L.conds.some((c) => condText(c).length > 18)) xBad.push(`${l}-${k}`);
+    seen.add(key);
+  }
+}
+check("おかわり：3つの難しさ×150問すべて答えが1つ・要らない条件なし・同じ番号は同じ問題・重複なし", xBad.length === 0, xBad.slice(0, 5).join(","));
 check("日の番号は日本時間の0時で変わる（2026-11-03 が #1）", dayNumber(new Date("2026-11-02T23:59:00+09:00")) === -1 && dayNumber(new Date("2026-11-03T00:00:00+09:00")) === 0 && dayNumber(new Date("2026-11-03T23:59:00+09:00")) === 0 && dayNumber(new Date("2026-11-04T00:00:00+09:00")) === 1);
 const html = readFileSync(path.join(root, "index.html"), "utf8");
 const og = (p) => (html.match(new RegExp(`<meta (?:property|name)="${p}" content="([^"]+)"`)) || [])[1];
@@ -80,7 +96,7 @@ try {
   await page.evaluate(() => localStorage.clear()); await page.reload();
 
   // 2. タイトル：30人並び、最初の1人だけ選べる
-  check("タイトルに30人並ぶ", (await page.locator(".lvbtn").count()) === 30);
+  check("タイトルに40人並ぶ", (await page.locator(".lvbtn").count()) === 40);
   check("はじめは最初のお客さんだけ選べる", (await page.locator(".lvbtn:not(.lock)").count()) === 1);
   check("外のサイトのスクリプトを読まない", await page.evaluate(() => [...document.scripts].every((s) => !s.src || new URL(s.src).protocol === "file:")));
   const kofi = await page.evaluate(() => [...document.links].find((a) => a.href.includes("ko-fi"))?.href);
@@ -140,7 +156,7 @@ try {
     const s = await page.evaluate(() => __game.state);
     if (!(s.done && s.stars >= 1)) hintFail.push(i + 1);
   }
-  check("30問すべて、間違えた所からヒントだけで解ける", hintFail.length === 0, hintFail.join(","));
+  check(LEVELS.length + "問すべて、間違えた所からヒントだけで解ける", hintFail.length === 0, hintFail.join(","));
 
   // 6. でたらめに積んだり外したりしても、具材の数は変わらず、エラーも出ない（各問題 30 手 × 30 問）
   const lost = await page.evaluate((LV) => {
@@ -165,7 +181,7 @@ try {
   check("開き直しても記録が残る（2人クリア → 3人目が開く）", (await page.locator(".lvbtn:not(.lock)").count()) >= 3);
   check("開き直しても音を消した設定が残る", (await page.textContent("#sound1")) === "🔈");
   const share = await page.evaluate(() => shareText());
-  check("シェアの文にクリア人数と星が入る", /お客さん \d+\/30 人クリア ★\d+/.test(share), share.split("\n")[1]);
+  check("シェアの文にクリア人数と星が入る", /お客さん \d+\/40 人クリア ★\d+/.test(share), share.split("\n")[1]);
   check("ページのエラーが無い", errors.length === 0, errors.join(" / "));
 
   // 7b. 出題リンク・きょうのわがまま・連続日数・シェアの文（答えを書かない）
@@ -176,8 +192,8 @@ try {
   await pq.goto(url + "?q=15");
   let qs = await pq.evaluate(() => __game.state);
   check("出題リンク（?q=15）で開くと、まだ開いていなくても15人目から遊べる", qs.mode === "level" && qs.lv === 14 && await pq.locator("#banner").isVisible());
-  for (const bad of ["?q=0", "?q=31", "?q=abc", "?q=2.5"]) { await pq.goto(url + bad); if (!(await pq.locator("#title").isVisible())) errors.push("変な出題リンクでタイトルが出ない " + bad); }
-  check("変な出題リンク（0・31・文字・小数）ではタイトルが出る", !errors.some((e) => e.startsWith("変な出題リンク")));
+  for (const bad of ["?q=0", "?q=41", "?q=abc", "?q=2.5"]) { await pq.goto(url + bad); if (!(await pq.locator("#title").isVisible())) errors.push("変な出題リンクでタイトルが出ない " + bad); }
+  check("変な出題リンク（0・41・文字・小数）ではタイトルが出る", !errors.some((e) => e.startsWith("変な出題リンク")));
   await pq.evaluate(() => localStorage.clear()); await pq.goto(url);
   check("はじめて遊ぶ人には遊び方の案内が出る", await (async () => { await pq.click("#cont"); return pq.locator("#guide").isVisible(); })());
   await pq.click("#guideOk"); await pq.reload(); await pq.click("#cont");
@@ -229,6 +245,37 @@ try {
   // 「コピーしました」を続けて出しても、最後は元の文言に戻る
   const flashBack = await pq.evaluate(async () => { const b = document.getElementById("share1"); const o = b.innerHTML; __game.flash(b, "コピーしました"); await new Promise((r) => setTimeout(r, 300)); __game.flash(b, "コピーしました"); await new Promise((r) => setTimeout(r, 1900)); return b.innerHTML === o; });
   check("シェアのボタンを続けて押しても、文言が元に戻る", flashBack);
+  // おかわり：解くと次の問題へ、ノーミス連続を数え、ミスすると0に戻る。最高は残る
+  await pq.evaluate(() => { localStorage.clear(); __game.showTitle(); });
+  await pq.reload();
+  const solveExtra = async (miss) => {
+    const c = await pq.evaluate(() => __game.state.cur);
+    if (miss) { const w = perms(c.items).find((o) => o.join() !== c.answer.join()); for (const t of w) await pq.click(`.ing[data-t="${t}"]`); await pq.click("#go"); await pq.click("#retry"); }
+    for (const t of c.answer) await pq.click(`.ing[data-t="${t}"]`); await pq.click("#go");
+    return c;
+  };
+  await pq.evaluate((src) => { window.perms = new Function("return " + src)(); }, perms.toString());
+  await pq.click('#extras button[data-l="1"]');
+  const e1 = await solveExtra(false);
+  await pq.click("#go");
+  const e2 = await solveExtra(false);
+  let xr = await pq.evaluate(() => __game.rec().extra[1]);
+  check("おかわり：一発で2問解くとノーミス2連続・次は別の問題", xr.n === 2 && xr.run === 2 && xr.best === 2 && JSON.stringify(e1.conds) !== JSON.stringify(e2.conds), JSON.stringify(xr));
+  check("おかわり：結果のシェア文に答え（具材の名前）を書かない", (await pq.evaluate(() => __game.shareText("extra"))).includes("ノーミス 2連続") && leak(await pq.evaluate(() => __game.shareText("extra"))).length === 0);
+  await pq.click("#go"); await solveExtra(true);
+  xr = await pq.evaluate(() => __game.rec().extra[1]);
+  check("おかわり：ミスすると連続は0に戻り、最高は残る", xr.n === 3 && xr.run === 0 && xr.best === 2, JSON.stringify(xr));
+  await pq.click("#back");
+  check("タイトルのおかわりに解いた数と最高が出る", /3問/.test(await pq.textContent('#extras button[data-l="1"]')) && /最高 2/.test(await pq.textContent('#extras button[data-l="1"]')));
+  // 記録帳：きょうの星がカレンダーに、章の王冠は全員★3で付く
+  await pq.evaluate(() => { __game.setToday(30); }); await pq.evaluate(() => __game.startDaily());
+  await solveExtra(false); await pq.click("#back");
+  await pq.click("#log summary");
+  const logText = await pq.textContent("#logBody");
+  check("記録帳に、きょうの星（カレンダー）・解いた日・おかわりの記録が出る", (await pq.locator(".cal i.today.s3").count()) === 1 && /解いた日 1日/.test(logText) && /むずかしい3問/.test(logText), logText.slice(0, 120));
+  await pq.evaluate(() => { const r = JSON.parse(localStorage.getItem("wagamamaBurger1")); r.best = Array(10).fill(3); localStorage.setItem("wagamamaBurger1", JSON.stringify(r)); });
+  await pq.reload();
+  check("1章を全員★3にすると、章と記録帳に王冠が付く", /👑/.test(await pq.textContent(".chap h2")) && /1章👑/.test(await pq.textContent("#logBody")));
   // 押す所の大きさ（指で押す所は 44px 以上。積んだ具材と条件の中の絵は除く）
   const small = [];
   for (const view of ["title", "play"]) {
@@ -295,12 +342,12 @@ try {
     check("画面が読むファイルが sw.js の SHELL にそろう", scripts.length === 0, scripts.join(","));
     await ctx.setOffline(true);
     const offErr = await pw.reload().then(() => "", (e) => e.message.split("\n")[0]);
-    check("電波が無くてもタイトルが開き、30人並ぶ", !offErr && (await pw.locator(".lvbtn").count()) === 30, offErr);
+    check("電波が無くてもタイトルが開き、40人並ぶ", !offErr && (await pw.locator(".lvbtn").count()) === 40, offErr);
     if (!offErr) { await pw.click('.lvbtn[data-i="0"]'); }
     check("電波が無くても遊べる（具材が並ぶ）", (await pw.locator(".ing").count()) >= 2);
     await ctx.setOffline(false); down = true;
     const downErr = await pw.goto(base).then(() => "", (e) => e.message.split("\n")[0]);
-    check("サーバーが 503 を返しても、保存したタイトルが開く", !downErr && (await pw.locator(".lvbtn").count()) === 30, downErr);
+    check("サーバーが 503 を返しても、保存したタイトルが開く", !downErr && (await pw.locator(".lvbtn").count()) === 40, downErr);
     down = false;
     check("PWA の確かめでページのエラーが無い", errPw.length === 0, errPw.join(" / "));
   } finally { await ctx.close(); server.close(); }
