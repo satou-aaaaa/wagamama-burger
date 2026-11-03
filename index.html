@@ -244,8 +244,11 @@ function finish() {
   toast(LOSE[Math.floor(Math.random() * LOSE.length)]);
 }
 function hint() {
-  if (done) return; usedHint = true;
+  if (done) return;
   var ans = LEVELS[lv].answer, i = 0; while (i < stack.length && stack[i] === ans[i]) i++;
+  // 全部正しく積めているときはヒントを使ったことにしない（星が減らないように）
+  if (i === ans.length) { toast("もう完成！「できあがり！」を押して"); return; }
+  usedHint = true;
   if (i < stack.length) { hintAt = i; hintIng = null; render(); toast("下から" + (i + 1) + "番目を見直して"); }
   else { hintAt = null; hintIng = ans[i]; render(); toast("次は" + ING[ans[i]]); }
 }

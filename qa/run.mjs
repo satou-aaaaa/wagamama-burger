@@ -96,6 +96,13 @@ try {
   st = await page.evaluate(() => __game.state);
   check("2回目に解くと星2つ", st.done && st.stars === 2, String(st.stars));
 
+  // 4b. 全部正しく積んでからヒントを押しても、ヒントを使ったことにならない（星3つのまま）
+  await page.evaluate(() => __game.start(2));
+  for (const t of LEVELS[2].answer) await page.click(`.ing[data-t="${t}"]`);
+  await page.click("#hint"); await page.click("#go");
+  st = await page.evaluate(() => __game.state);
+  check("完成した並びでヒントを押しても星は減らない", st.done && st.stars === 3, String(st.stars));
+
   // 5. どの問題もヒントだけで解ける（ヒントを使うと星1つ）。わざと間違えた所からもヒントでたどり着ける
   const hintFail = [];
   for (let i = 0; i < LEVELS.length; i++) {
@@ -200,6 +207,9 @@ try {
     down = false;
     check("PWA の確かめでページのエラーが無い", errPw.length === 0, errPw.join(" / "));
   } finally { await ctx.close(); server.close(); }
+} catch (e) {
+  // 操作が途中で止まっても、失敗として report.md に残す
+  check("QA の実行が途中で止まった", false, String(e.message || e).split("\n")[0]);
 } finally {
   await browser.close();
 }
