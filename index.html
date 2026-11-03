@@ -56,7 +56,7 @@ h1{font-size:20px;margin:0}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:4px 0 12px}
 .cal i{height:26px;border-radius:6px;background:var(--bg);border:1px solid var(--line);font-style:normal;font-size:10px;display:flex;align-items:center;justify-content:center;color:var(--sub)}
 .after a.fb,.guide a.fb{display:inline-flex;align-items:center;min-height:48px;padding:0 12px;color:var(--sub);font-size:14px}
-.kofi{font-size:13px;color:var(--sub);line-height:1.7;margin:8px 4px}.kofi a{display:inline-block;min-height:48px;line-height:48px}
+.kofi{font-size:13px;color:var(--sub);line-height:1.8;margin:12px 4px;text-align:center}.kofi a{color:var(--acc);font-weight:700;padding:14px 2px}
 .badges{list-style:none;padding:0;margin:0 0 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .badges li{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:6px 8px;display:grid;grid-template-columns:auto 1fr;column-gap:6px;align-items:center;opacity:.6}
 .badges li.on{opacity:1;border-color:var(--star)}
@@ -95,7 +95,9 @@ ul.conds li.newc::after{content:"NEW";font-size:10px;font-weight:800;color:#fff;
 .t-bun-b{height:34px;background:linear-gradient(#f4b062,#d98a3a);border-radius:8px 8px 22px 22px;width:66%;cursor:default}
 .t-bun-t{height:54px;width:68%;border-radius:50% 50% 10px 10px/95% 95% 10px 10px;background:radial-gradient(ellipse 4px 2px at 25% 35%,#fff9 98%,transparent),radial-gradient(ellipse 4px 2px at 50% 22%,#fff9 98%,transparent),radial-gradient(ellipse 4px 2px at 72% 38%,#fff9 98%,transparent),radial-gradient(ellipse 4px 2px at 40% 52%,#fff9 98%,transparent),radial-gradient(ellipse 4px 2px at 62% 58%,#fff9 98%,transparent),linear-gradient(#f7bd6e,#d98a3a);cursor:default}
 .t-patty{height:32px;background:radial-gradient(circle at 30% 40%,#0002 2px,transparent 3px),radial-gradient(circle at 70% 60%,#0002 2px,transparent 3px),linear-gradient(#7a4422,#4d2610);border-radius:14px;box-shadow:inset 0 -4px 0 #0003}
-.t-cheese{height:14px;width:68%;background:linear-gradient(#ffd84a,#f5b800);clip-path:polygon(0 0,100% 0,100% 100%,86% 100%,82% 190%,78% 100%,30% 100%,25% 220%,20% 100%,0 100%)}
+/* チーズのたれた形は ::before で切る（本体を切ると、横の番号まで消える） */
+.t-cheese{height:14px;width:68%;background:none}
+.t-cheese::before{content:"";position:absolute;inset:0;background:linear-gradient(#ffd84a,#f5b800);clip-path:polygon(0 0,100% 0,100% 100%,86% 100%,82% 190%,78% 100%,30% 100%,25% 220%,20% 100%,0 100%)}
 .t-lettuce{height:22px;width:70%;background:linear-gradient(#8fdc5a,#4caf2c);border-radius:45% 55% 40% 60%/90% 80% 40% 40%}
 .t-tomato{height:19px;width:56%;background:radial-gradient(circle at 30% 50%,#ffb3a3 3px,transparent 4px),radial-gradient(circle at 70% 50%,#ffb3a3 3px,transparent 4px),linear-gradient(#ff5a4a,#d4302a);border-radius:40%}
 .t-pickle{height:14px;width:46%;background:repeating-linear-gradient(90deg,#6fa83a 0 14px,#557f2b 14px 18px);border-radius:8px}

@@ -415,6 +415,15 @@ try {
   // できあがりの瞬間、台の具がぎゅっとつぶれて戻る（あとに class が残らない）
   const sq = await pq.evaluate(async () => { __game.start(0); __game.state.cur.answer.forEach((t) => __game.add(t)); __game.finish(); const seen = []; for (let i = 0; i < 14; i++) { await new Promise((r) => setTimeout(r, 60)); seen.push(document.getElementById("stage").classList.contains("squash")); } return { during: seen.some(Boolean), after: seen[seen.length - 1] }; });
   check("できあがりの瞬間にバーガーがぎゅっとつぶれて戻る", sq.during && !sq.after, JSON.stringify(sq));
+  // 積んだ具の横の番号が、どの具でも見える（チーズの形の切り抜きで番号が消えていた。2026-11-03）
+  const cheeseLv = LEVELS.findIndex((L) => L.items.includes("cheese"));
+  const numHidden = await pq.evaluate((i) => {
+    __game.start(i); __game.state.cur.answer.forEach((t) => __game.add(t));
+    const bad = []; if (!document.querySelector(".stage .t-cheese .num")) bad.push("チーズが無い");
+    document.querySelectorAll(".stage .ly .num").forEach((n) => { const r = n.getBoundingClientRect(), cp = getComputedStyle(n.parentElement).clipPath; if (r.width === 0 || (cp && cp !== "none")) bad.push(n.parentElement.className); });
+    return bad;
+  }, cheeseLv);
+  check("積んだ具の横の番号が切り抜きで消えない（チーズなど）", numHidden.length === 0, numHidden.join(","));
   // 押す所の大きさ（指で押す所は 48px 以上。積んだ具材と条件の中の絵は除く）
   const small = [];
   for (const view of ["title", "play"]) {
