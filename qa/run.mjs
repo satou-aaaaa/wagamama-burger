@@ -101,6 +101,20 @@ try {
   check("外のサイトのスクリプトを読まない", await page.evaluate(() => [...document.scripts].every((s) => !s.src || new URL(s.src).protocol === "file:")));
   const kofi = await page.evaluate(() => [...document.links].find((a) => a.href.includes("ko-fi"))?.href);
   check("応援のリンクが Ko-fi のページを指す（ボタン用スクリプトは入れない）", kofi === "https://ko-fi.com/satouaaaaa", kofi || "無い");
+  // Ko-fi のひとこと：章を初めてクリアした結果の画面でだけ出す。遊ぶ前（タイトル）・途中・失敗・ふつうのクリアでは出さない（共有フォルダ kofi/app-guide.md）
+  const kofi1 = await page.evaluate(() => {
+    const vis = () => !document.getElementById("kofi").hidden && document.getElementById("kofi").offsetParent !== null;
+    localStorage.clear(); const out = {}; out.title = vis();
+    __game.start(0); out.playing = vis();
+    const c0 = __game.state.cur; [...c0.answer].reverse().forEach((t) => __game.add(t)); __game.finish(); out.fail = __game.state.done ? "solved" : vis();
+    __game.start(0); __game.state.cur.answer.forEach((t) => __game.add(t)); __game.finish(); out.normalClear = vis();
+    __game.start(9); __game.state.cur.answer.forEach((t) => __game.add(t)); __game.finish(); out.chapterClear = vis();
+    out.href = document.querySelector("#kofi a").href;
+    __game.start(9); out.again = vis(); __game.state.cur.answer.forEach((t) => __game.add(t)); __game.finish(); out.secondChapterClear = vis();
+    return out;
+  });
+  check("Ko-fi のひとことは章を初めてクリアした結果の画面だけに出る（遊ぶ前・途中・失敗・ふつうのクリア・2回目には出ない）", kofi1.title === false && kofi1.playing === false && kofi1.fail === false && kofi1.normalClear === false && kofi1.chapterClear === true && kofi1.again === false && kofi1.secondChapterClear === false && kofi1.href === "https://ko-fi.com/satouaaaaa", JSON.stringify(kofi1));
+  await page.evaluate(() => localStorage.clear()); await page.reload(); await page.waitForLoadState("load");
   // 感想の受け口：タイトル・遊び方・終わりの画面に、Issue フォームへのただのリンク（ゲームからは何も送らない。shared-workflows routines/game-feedback.md）
   const fbs = await page.evaluate(() => [...document.querySelectorAll("a.fb")].map((a) => [a.href, a.target, a.rel, a.closest("#after,.guide,.foot")?.className]));
   check("感想を送るリンクが、タイトル・遊び方・終わりの画面にあり、Issue フォーム「感想」を新しいタブで開く", fbs.length === 3 && fbs.every(([h, t, r]) => h === "https://github.com/satou-aaaaa/wagamama-burger/issues/new?template=feedback.yml" && t === "_blank" && /noopener/.test(r)) && ["after", "guide", "foot"].every((c) => fbs.some((f) => f[3] === c)), JSON.stringify(fbs));
