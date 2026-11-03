@@ -275,6 +275,23 @@ try {
   ds = await solveDaily(41);
   const s41 = await pq.evaluate(() => { __game.setToday(42); return __game.shareText("daily"); });
   check("日付をまたいで解いた問題はその日の記録になり、次の日の問題も記録され、日が変わってもその結果をシェアできる", /#41\n/.test(s40[1]) && s40[0] === 1 && ds.streak === 2 && /#42\n/.test(s41), JSON.stringify([s40, ds.streak, s41.split("\n")[0]]));
+  // 取りこぼした日をあとから解く：記録帳のカレンダーの ↺ から、その日の問題を遊べる。連続日数とカレンダーの正（log）は変えない
+  await pq.evaluate(() => { __game.setToday(45); __game.showTitle(); document.getElementById("log").open = true; });
+  const before = await pq.evaluate(() => ({ streak: __game.rec().streak, missed: __game.missedDays() }));
+  await pq.click('.misses .miss[data-d="44"]');
+  const p44 = await pq.evaluate(() => ({ mode: __game.state.mode, items: __game.state.cur.items, answer: __game.state.cur.answer, lv: document.getElementById("lv").textContent }));
+  for (const t of p44.answer) await pq.click(`.ing[data-t="${t}"]`); await pq.click("#go");
+  const a44 = await pq.evaluate(() => ({ rec: __game.rec(), stars: __game.state.stars, shareR: !document.getElementById("shareR").hidden, go: document.getElementById("go").textContent }));
+  check("あとから：↺ を押すとその日の問題（makeDaily と同じ）が出て、解くと past に星が付き、log・連続日数は変わらず、結果のシェアは出ない",
+    before.missed.includes(44) && !before.missed.includes(40) && p44.mode === "past" && JSON.stringify(p44.items) === JSON.stringify(makeDaily(44).items) && /#45/.test(p44.lv)
+    && a44.rec.past[44] === 3 && !a44.rec.log[44] && JSON.stringify(a44.rec.streak) === JSON.stringify(before.streak) && a44.stars === 3 && !a44.shareR && /タイトル/.test(a44.go),
+    JSON.stringify({ missed: before.missed.slice(0, 3), p44: p44.mode, lv: p44.lv, past: a44.rec.past, shareR: a44.shareR, go: a44.go }));
+  await pq.evaluate(() => { __game.showTitle(); document.getElementById("log").open = true; });
+  const cell44 = await pq.textContent('.cal i[title="#45（あとから）"]');
+  const gone44 = await pq.locator('.misses .miss[data-d="44"]').count();
+  check("あとから解いた日はカレンダーに ↺★ で出て、取りこぼしのボタンからは消える", cell44 === "↺★3" && gone44 === 0, cell44 + " " + gone44);
+  const mp = await pq.evaluate(() => __game.mergeRec({ best: [], log: {}, past: { 5: 1, 6: 3 }, extra: [], streak: { max: 0 }, wlog: {}, badges: [] }, { past: { 5: 3, 6: 1, 7: 2 } }).past);
+  check("タブを合わせても、あとから解いた日の星は多いほうが残る", mp[5] === 3 && mp[6] === 3 && mp[7] === 2, JSON.stringify(mp));
   // 出題・結果のシェア文
   await pq.evaluate(() => __game.start(0)); for (const t of LEVELS[0].answer) await pq.click(`.ing[data-t="${t}"]`); await pq.click("#go");
   check("クリアすると「出題する」「結果をシェア」が出て、使えない「ひとつ戻す・ヒント」の列は隠れる", await pq.locator("#shareQ").isVisible() && await pq.locator("#shareR").isVisible() && !(await pq.locator("#sub").isVisible()));
