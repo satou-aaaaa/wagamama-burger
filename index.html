@@ -57,6 +57,10 @@ h1{font-size:20px;margin:0}
 .cal i{height:26px;border-radius:6px;background:var(--bg);border:1px solid var(--line);font-style:normal;font-size:10px;display:flex;align-items:center;justify-content:center;color:var(--sub)}
 .after a.fb,.guide a.fb{display:inline-flex;align-items:center;min-height:48px;padding:0 12px;color:var(--sub);font-size:14px}
 .kofi{font-size:13px;color:var(--sub);line-height:1.7;margin:8px 4px}.kofi a{display:inline-block;min-height:48px;line-height:48px}
+.badges{list-style:none;padding:0;margin:0 0 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.badges li{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:6px 8px;display:grid;grid-template-columns:auto 1fr;column-gap:6px;align-items:center;opacity:.6}
+.badges li.on{opacity:1;border-color:var(--star)}
+.badges span{grid-row:span 2;font-size:22px}.badges b{font-size:12px}.badges small{font-size:10px;color:var(--sub)}
 .zt{display:block;font-size:13px;margin:4px 0}
 .zukan{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin:0 0 12px}
 .zukan i{aspect-ratio:1;border-radius:8px;background:var(--bg);border:1px solid var(--line);font-style:normal;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--sub)}
@@ -188,11 +192,11 @@ var $ = function (id) { return document.getElementById(id); };
 var PER = 10;
 // 記録: best[i] = 0〜3（星）。muted = 音を消す。guided = 遊び方を見た。daily = きょうの記録。streak = 連続日数
 // extra[難しさ] = { n: 解いた数, run: いまのノーミス連続, best: ノーミス連続の最高, perfect: ★3の数 }。log[日] = きょうのわがままの星
-var rec = { best: [], muted: false, guided: false, daily: null, streak: { last: -99, n: 0, max: 0 }, extra: [], log: {} };
+var rec = { badges: [], best: [], muted: false, guided: false, daily: null, streak: { last: -99, n: 0, max: 0 }, extra: [], log: {} };
 try {
   var s = JSON.parse(localStorage.getItem(KEY) || "{}");
   if (Array.isArray(s.best)) rec.best = s.best;
-  rec.muted = !!s.muted; rec.guided = !!s.guided;
+  rec.muted = !!s.muted; rec.guided = !!s.guided; if (Array.isArray(s.badges)) rec.badges = s.badges;
   if (s.daily && typeof s.daily.day === "number") rec.daily = s.daily;
   if (s.streak && typeof s.streak.n === "number") rec.streak = s.streak;
   if (Array.isArray(s.extra)) rec.extra = s.extra;
@@ -224,6 +228,7 @@ function mergeRec(a, b) {
     a.extra[l] = { n: m.n, run: m.run || 0, best: Math.max(x.best || 0, y.best || 0), perfect: Math.max(x.perfect || 0, y.perfect || 0) };
   });
   a.guided = a.guided || !!b.guided;
+  if (Array.isArray(b.badges)) b.badges.forEach(function (id) { if (a.badges.indexOf(id) < 0) a.badges.push(id); });
   return a;
 }
 function save() { try { mergeRec(rec, JSON.parse(localStorage.getItem(KEY) || "null")); localStorage.setItem(KEY, JSON.stringify(rec)); } catch (e) {} }
@@ -308,6 +313,7 @@ function showTitle() {
 }
 // 記録帳：クリア・星・章の王冠・毎日のカレンダー（直近4週）・おかわり
 function showLog() {
+  if (newBadges().length) save(); // 前の版で遊んだ記録からも、取れている実績を付ける
   var three = rec.best.filter(function (b) { return b === 3; }).length, days = Object.keys(rec.log).length;
   var crowns = CHAPTERS.map(function (c, ci) { return (ci + 1) + "章" + (chapterStars(ci) === PER * 3 ? "👑" : "・" + chapterStars(ci) + "/" + PER * 3); }).join("　");
   var cal = "", t = today();
@@ -315,7 +321,40 @@ function showLog() {
   $("logBody").innerHTML = "<dl><dt>お客さん</dt><dd>" + clearedCount() + "/" + LEVELS.length + "人・★" + total() + "/" + LEVELS.length * 3 + "（★3は" + three + "人）</dd>" +
     "<dt>章</dt><dd>" + crowns + "</dd><dt>きょうの</dt><dd>解いた日 " + days + "日・最高 " + (rec.streak.max || 0) + "日連続</dd>" +
     EXTRA.map(function (e, l) { var x = ex(l); return "<dt>" + e.name + "</dt><dd>" + x.n + "問・★3 " + (x.perfect || 0) + "問・ノーミス最高 " + x.best + "</dd>"; }).join("") +
-    "</dl>" + distHtml() + '<div class="cal" aria-label="きょうのわがまま 直近4週">' + cal + "</div>" + zukanHtml();
+    "</dl>" + distHtml() + '<div class="cal" aria-label="きょうのわがまま 直近4週">' + cal + "</div>" + zukanHtml() + badgeHtml();
+}
+// 実績：記録から決まる目標。取ったものは badges に覚え、初めて取ったときだけ知らせる。まだのものは条件だけ見せる（次の目標になるように）
+function exSum(f) { return rec.extra.reduce(function (a, x) { return a + (x ? f(x) : 0); }, 0); }
+function chapterDone(ci) { for (var i = ci * PER; i < (ci + 1) * PER; i++) if (!stars(i)) return false; return true; }
+var BADGES = [
+  ["first", "🍔", "はじめての一品", "お客さんを1人満足させる", function () { return clearedCount() >= 1; }],
+  ["ch1", "🥉", "1章のお客さん全員", "1章を全員クリア", function () { return chapterDone(0); }],
+  ["ch2", "🥈", "2章のお客さん全員", "2章を全員クリア", function () { return chapterDone(1); }],
+  ["ch3", "🥇", "3章のお客さん全員", "3章を全員クリア", function () { return chapterDone(2); }],
+  ["ch4", "🏆", "達人のお客さん全員", "4章を全員クリア", function () { return chapterDone(3); }],
+  ["crown", "👑", "王冠", "どれか1章を全員★3", function () { return CHAPTERS.some(function (c, ci) { return chapterStars(ci) === PER * 3; }); }],
+  ["all3", "💎", "全員★3", "40人全員を★3", function () { return rec.best.filter(function (b) { return b === 3; }).length >= LEVELS.length; }],
+  ["d3", "🔥", "3日連続", "きょうのわがままを3日連続", function () { return (rec.streak.max || 0) >= 3; }],
+  ["d7", "📅", "1週間連続", "きょうのわがままを7日連続", function () { return (rec.streak.max || 0) >= 7; }],
+  ["d30", "🌙", "30日連続", "きょうのわがままを30日連続", function () { return (rec.streak.max || 0) >= 30; }],
+  ["days50", "🗓️", "常連さん", "きょうのわがままを50日解く", function () { return Object.keys(rec.log).length >= 50; }],
+  ["x10", "🍟", "おかわり10問", "おかわりを合わせて10問", function () { return exSum(function (x) { return x.n || 0; }) >= 10; }],
+  ["x100", "🥤", "おかわり100問", "おかわりを合わせて100問", function () { return exSum(function (x) { return x.n || 0; }) >= 100; }],
+  ["run5", "✨", "ノーミス5連続", "おかわりで★3を5問続ける", function () { return rec.extra.some(function (x) { return x && x.best >= 5; }); }],
+  ["run10", "🌟", "ノーミス10連続", "おかわりで★3を10問続ける", function () { return rec.extra.some(function (x) { return x && x.best >= 10; }); }],
+  ["master10", "🧠", "達人のおかわり", "おかわり・達人を10問", function () { return !!(rec.extra[2] && rec.extra[2].n >= 10); }]
+];
+// 新しく取った実績を覚えて返す（知らせる用）
+function newBadges() {
+  var got = [];
+  BADGES.forEach(function (b) { if (rec.badges.indexOf(b[0]) < 0 && b[4]()) { rec.badges.push(b[0]); got.push(b); } });
+  return got;
+}
+function badgeHtml() {
+  return '<b class="zt">実績 ' + rec.badges.length + "/" + BADGES.length + '</b><ul class="badges" aria-label="実績">' + BADGES.map(function (b) {
+    var on = rec.badges.indexOf(b[0]) >= 0;
+    return '<li class="' + (on ? "on" : "") + '"><span aria-hidden="true">' + (on ? b[1] : "🔒") + "</span><b>" + (on ? b[2] : "？？？") + "</b><small>" + b[3] + "</small></li>";
+  }).join("") + "</ul>";
 }
 // お客さん図鑑：満足させたお客さんの顔が並ぶ（まだの人は ？）。★3 の人は金色の枠
 function zukanHtml() {
@@ -477,7 +516,8 @@ function finish() {
     else if (mode === "extra") { first = true; recordExtra(n); prefetchExtra(exLv, ex(exLv).n); }
     else { first = !stars(lv); rec.best[lv] = Math.max(stars(lv), n); }
     kofiShow = mode === "level" && first && (lv + 1) % PER === 0;
-    save();
+    var got = newBadges(); save();
+    if (got.length) setTimeout(function () { toast("🏅 実績：" + got.map(function (b) { return b[1] + b[2]; }).join("・")); }, mode === "level" && first && (lv + 1) % PER === 0 ? 3800 : 1900);
     // 結果画面のシェアは、いま解いた日の記録で（別のタブが先にその日を解いていたら、その記録）
     if (mode === "daily") dailyShare = rec.daily && rec.daily.day === cur.daily ? rec.daily : { day: cur.daily, solved: true, stars: rec.log[cur.daily] || n, tries: tries, hint: usedHint };
     render(); showStack(); SND.win(); buzz([20, 40, 20]); confetti();
@@ -563,6 +603,6 @@ var q = +(new URLSearchParams(location.search).get("q") || 0);
 if (q >= 1 && q <= LEVELS.length && Math.floor(q) === q) start(q - 1, true); else showTitle();
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(function () {});
 // 検査（qa/run.mjs）用の窓口
-window.__game = { untilNext: untilNext, mergeRec: mergeRec, exCached: function (l, k) { return !!exCache[l + ":" + k]; }, start: start, startDaily: startDaily, startExtra: startExtra, rec: function () { return JSON.parse(JSON.stringify(rec)); }, add: add, finish: finish, showTitle: showTitle, shareText: shareText, flash: flash, setToday: function (d) { todayOverride = d; },
+window.__game = { untilNext: untilNext, mergeRec: mergeRec, BADGES: BADGES, exCached: function (l, k) { return !!exCache[l + ":" + k]; }, start: start, startDaily: startDaily, startExtra: startExtra, rec: function () { return JSON.parse(JSON.stringify(rec)); }, add: add, finish: finish, showTitle: showTitle, shareText: shareText, flash: flash, setToday: function (d) { todayOverride = d; },
   get state() { return { lv: lv, mode: mode, stack: stack.slice(), left: left.slice(), done: done, judged: judged, stars: mode === "daily" ? (rec.log[today()] || 0) : mode === "extra" ? (done ? lastStars : 0) : stars(lv), streak: streakNow(), cur: cur }; } };
 </script></body></html>

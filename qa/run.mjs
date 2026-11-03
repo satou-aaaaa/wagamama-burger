@@ -361,6 +361,33 @@ try {
     return { log: saved.log, streak: saved.streak, daily: saved.daily.day, share: __game.shareText("daily").split("\n").slice(0, 2).join("|") };
   });
   check("前の日をあとから解いても、その日がカレンダーと連続に入り（3日連続）、シェアはその日の結果", lateDay.log[60] === 3 && lateDay.log[61] === 1 && lateDay.streak.n === 3 && lateDay.daily === 61 && /#61\|.*★★★/.test(lateDay.share), JSON.stringify(lateDay));
+  // 実績：初めてお客さんを満足させると「はじめての一品」が付いて知らせが出る。記録帳に取った数とまだの条件（🔒）が出る
+  await pq.evaluate(() => localStorage.clear()); await pq.reload(); await pq.waitForLoadState("load");
+  const badge1 = await pq.evaluate(async () => {
+    __game.start(0); __game.state.cur.answer.forEach((t) => __game.add(t)); __game.finish();
+    await new Promise((r) => setTimeout(r, 2100));
+    const toast = document.getElementById("toast").textContent;
+    __game.showTitle(); document.querySelector("details.log").open = true; document.querySelector("details.log summary").click(); document.querySelector("details.log").open = true;
+    await new Promise((r) => setTimeout(r, 100));
+    const saved = JSON.parse(localStorage.getItem("wagamamaBurger1"));
+    return { toast, badges: saved.badges, head: document.querySelector(".badges")?.previousElementSibling?.textContent, locked: document.querySelectorAll(".badges li:not(.on)").length, lockedText: document.querySelector(".badges li:not(.on)")?.textContent };
+  });
+  check("初めて満足させると実績「はじめての一品」が付き、知らせと記録帳（取った数・まだの条件）に出る", /はじめての一品/.test(badge1.toast) && JSON.stringify(badge1.badges) === '["first"]' && /実績 1\//.test(badge1.head) && badge1.locked === 15 && /🔒/.test(badge1.lockedText), JSON.stringify(badge1));
+  // 実績の条件は、記録がそろえば全部取れる（取れない実績が無い）。タブを合わせても取った実績は消えない
+  await pq.evaluate(() => {
+    const full = { best: Array(40).fill(3), log: {}, extra: [{ n: 50, run: 0, best: 10, perfect: 50 }, { n: 30, run: 0, best: 3, perfect: 3 }, { n: 20, run: 0, best: 1, perfect: 1 }], streak: { max: 30 }, badges: [] };
+    for (let d = 0; d < 60; d++) full.log[d] = 3;
+    localStorage.setItem("wagamamaBurger1", JSON.stringify(full));
+  });
+  await pq.reload(); await pq.waitForLoadState("load");
+  const badgeAll = await pq.evaluate(async () => {
+    document.querySelector("details.log summary").click(); await new Promise((r) => setTimeout(r, 100));
+    const on = document.querySelectorAll(".badges li.on").length, total = __game.BADGES.length;
+    const m = __game.mergeRec({ best: [], log: {}, daily: null, streak: { last: -99, n: 0, max: 0 }, extra: [], guided: false, badges: ["first"] }, { badges: ["d3", "first"] }).badges;
+    localStorage.clear();
+    return { on, total, m };
+  });
+  check("記録がそろえば実績は全部取れ（取れない実績が無い）、タブを合わせても取った実績は消えない", badgeAll.on === badgeAll.total && badgeAll.total === 16 && badgeAll.m.join() === "first,d3", JSON.stringify(badgeAll));
   // 押す所の大きさ（指で押す所は 48px 以上。積んだ具材と条件の中の絵は除く）
   const small = [];
   for (const view of ["title", "play"]) {
