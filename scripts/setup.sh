@@ -28,7 +28,6 @@ if ! node_ok; then
   # 版が足りず nvm があれば、.nvmrc の版を入れる（Claude Code のクラウドは /opt/nvm にある）
   NVM_DIR=${NVM_DIR:-$HOME/.nvm}; [ -s "$NVM_DIR/nvm.sh" ] || NVM_DIR=/opt/nvm
   if [ -s "$NVM_DIR/nvm.sh" ]; then
-    # --no-use: 読んだ時点で .nvmrc の版に切り替えようとさせない（入っていないと 3 を返し、set -e で黙って止まる）
     set +u; export NVM_DIR; . "$NVM_DIR/nvm.sh" --no-use; nvm install "$want" >/dev/null; set -u
     if node_ok; then
       # nvm の切り替えはこのスクリプトの中だけに効く（親のシェルは古い Node のまま）
