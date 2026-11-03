@@ -88,6 +88,9 @@ ul.conds li.newc::after{content:"NEW";font-size:10px;font-weight:800;color:#fff;
 .ly{position:relative;display:block;width:62%;margin-top:-2px;cursor:pointer;animation:drop .35s cubic-bezier(.3,1.4,.5,1);border:0;padding:0;font:inherit;color:inherit}
 .ly .num{position:absolute;left:-34px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--sub);width:24px;text-align:right}
 .ly.hint{outline:3px dashed var(--acc);outline-offset:3px;z-index:3}
+@keyframes squash{0%{scale:1}40%{scale:1.04 .86}100%{scale:1}}
+.stage.squash .ly:not(.t-bun-t){animation:squash .3s ease-out!important;transform-origin:50% 100%}
+@media (prefers-reduced-motion: reduce){.stage.squash .ly{animation:none!important}}
 @keyframes drop{from{transform:translateY(-120px);opacity:0}to{transform:none;opacity:1}}
 .t-bun-b{height:34px;background:linear-gradient(#f4b062,#d98a3a);border-radius:8px 8px 22px 22px;width:66%;cursor:default}
 .t-bun-t{height:54px;width:68%;border-radius:50% 50% 10px 10px/95% 95% 10px 10px;background:radial-gradient(ellipse 4px 2px at 25% 35%,#fff9 98%,transparent),radial-gradient(ellipse 4px 2px at 50% 22%,#fff9 98%,transparent),radial-gradient(ellipse 4px 2px at 72% 38%,#fff9 98%,transparent),radial-gradient(ellipse 4px 2px at 40% 52%,#fff9 98%,transparent),radial-gradient(ellipse 4px 2px at 62% 58%,#fff9 98%,transparent),linear-gradient(#f7bd6e,#d98a3a);cursor:default}
@@ -541,7 +544,10 @@ function finish() {
     if (got.length) setTimeout(function () { toast("🏅 実績：" + got.map(function (b) { return b[1] + b[2]; }).join("・")); }, mode === "level" && first && (lv + 1) % PER === 0 ? 3800 : 1900);
     // 結果画面のシェアは、いま解いた日の記録で（別のタブが先にその日を解いていたら、その記録）
     if (mode === "daily") dailyShare = rec.daily && rec.daily.day === cur.daily ? rec.daily : { day: cur.daily, solved: true, stars: rec.log[cur.daily] || n, tries: tries, hint: usedHint };
-    render(); showStack(); SND.win(); buzz([20, 40, 20]); confetti();
+    render(); showStack();
+    // 上のパンがのった瞬間に、全体がぎゅっとつぶれて戻る（できあがりの手ごたえ）
+    setTimeout(function () { var sg = $("stage"); sg.classList.add("squash"); setTimeout(function () { sg.classList.remove("squash"); }, 320); }, 300);
+    SND.win(); buzz([20, 40, 20]); confetti();
     var st = document.createElement("div"); st.className = "stars"; st.setAttribute("aria-label", "星" + n + "つ");
     st.innerHTML = [0, 1, 2].map(function (k) { return '<span class="' + (k < n ? "" : "off") + '" style="animation-delay:' + (0.2 + k * 0.15) + 's">★</span>'; }).join("");
     $("stage").appendChild(st);

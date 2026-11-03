@@ -412,6 +412,9 @@ try {
   });
   const wkLeak = Object.values(ING).filter((n) => wk.share.includes(n));
   check("今週の特大わがまま：タイトルにあり、具8枚、解くと週の記録に★が入りタイトルにクリア済みと出る。シェアに具材の名前が無い", wk.btn && wk.items === 8 && wk.week === 1 && wk.wlog[1] === 3 && /#2 クリア済み ★3/.test(wk.sub1) && /今週の特大わがまま #2/.test(wk.share) && wkLeak.length === 0, JSON.stringify({ ...wk, wkLeak }));
+  // できあがりの瞬間、台の具がぎゅっとつぶれて戻る（あとに class が残らない）
+  const sq = await pq.evaluate(async () => { __game.start(0); __game.state.cur.answer.forEach((t) => __game.add(t)); __game.finish(); const seen = []; for (let i = 0; i < 14; i++) { await new Promise((r) => setTimeout(r, 60)); seen.push(document.getElementById("stage").classList.contains("squash")); } return { during: seen.some(Boolean), after: seen[seen.length - 1] }; });
+  check("できあがりの瞬間にバーガーがぎゅっとつぶれて戻る", sq.during && !sq.after, JSON.stringify(sq));
   // 押す所の大きさ（指で押す所は 48px 以上。積んだ具材と条件の中の絵は除く）
   const small = [];
   for (const view of ["title", "play"]) {
