@@ -451,11 +451,16 @@ try {
   // できあがりのあと、キーボードで「感想を送る」リンクに合わせて Enter を押しても、次へ進まない（リンクの動きにまかせる）
   const enterLink = await pq.evaluate(() => {
     __game.start(0); __game.state.cur.answer.forEach((t) => __game.add(t)); __game.finish();
-    const lv0 = __game.state.lv, a = document.querySelector("#after a.fb"); a.addEventListener("click", (e) => e.preventDefault(), { once: true }); a.focus();
-    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
-    return { stillDone: __game.state.done, lv: __game.state.lv === lv0 };
+    const a = document.querySelector("#after a.fb"); window.__fbClicks = 0;
+    a.addEventListener("click", (e) => { window.__fbClicks++; e.preventDefault(); }, { once: true }); a.focus();
+    return { lv0: __game.state.lv };
   });
-  check("できあがりのあと「感想を送る」に合わせて Enter を押しても、次のお客さんへ進まない", enterLink.stillDone && enterLink.lv, JSON.stringify(enterLink));
+  await pq.keyboard.press("Enter"); // 合成のイベントではリンクの click が起きないので、本物のキー入力で
+  const afterEnter = await pq.evaluate(() => ({ clicks: window.__fbClicks, done: __game.state.done, lv: __game.state.lv }));
+  check("できあがりのあと「感想を送る」に合わせて Enter を押すと、リンクが開き、次のお客さんへ進まない", afterEnter.clicks === 1 && afterEnter.done && afterEnter.lv === enterLink.lv0, JSON.stringify(afterEnter));
+  // 1つのタブで毎日解き続けても、連続日数が途中（古い日の片付けなど）で止まらない
+  const longRun = await pq.evaluate(() => { for (let d = 1000; d < 1450; d++) __game.recordDaily(3, d); const r = __game.rec(); return { n: r.streak.n, max: r.streak.max }; });
+  check("毎日1問を450日続けると、連続日数が450日になる", longRun.n === 450 && longRun.max >= 450, JSON.stringify(longRun));
   await pq.close();
   check("出題リンク・記録・遊ぶ画面の確かめでページのエラーが無い", errors.length === 0, errors.join(" / "));
   // 動きを減らす設定の人には、紙吹雪を出さない
