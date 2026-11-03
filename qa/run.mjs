@@ -6,6 +6,7 @@ import { createRequire } from "node:module";
 import http from "node:http";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { createHash } from "node:crypto";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const require = createRequire(import.meta.url);
@@ -88,6 +89,20 @@ for (let w = 0; w < 156; w++) {
   wSeen.add(key);
 }
 check("今週の特大わがまま：3年分すべて具8枚・答えが1つ・要らない条件なし・同じ週は同じ問題・重複なし", wBad.length === 0, wBad.slice(0, 5).join(","));
+// 1e. 過去の問題が変わらない（指紋）。同じ処理で2回作って比べるだけでは、作り方を変えたとき両方が同じように変わって見逃す。
+// 値が変わったら、過去の日・週・番号の問題とシェアの文が全部変わるということ。作り方は変えず、意図して変えるなら AGENTS.md の決まりを先に見直す。
+const fp = (a) => createHash("sha256").update(JSON.stringify(a)).digest("hex");
+const FP = {
+  daily: "82e62058e781fd51b3f67d09981ec113614fb48b45ed43c4671cf9db0ac0d056",
+  weekly: "76ae1e4a5289f33cf285dfe731b38918ff947fc0a4c7e36cde79a7fa43e78a20",
+  extra: "07583058e3a4596a85629dfcc8d8340c491185d26531f6ecbcb59b1ae1a4a238",
+};
+const fpNow = {
+  daily: fp(Array.from({ length: 200 }, (_, d) => makeDaily(d))),
+  weekly: fp(Array.from({ length: 20 }, (_, w) => makeWeekly(w))),
+  extra: fp([0, 1, 2].flatMap((lv) => Array.from({ length: 10 }, (_, k) => makeExtra(lv, k)))),
+};
+for (const k of Object.keys(FP)) check(`過去の問題が変わらない（${k} の指紋）`, fpNow[k] === FP[k], fpNow[k]);
 check("週は月曜はじまり（11/3火は0週、11/9月から1週）", weekOf(0) === 0 && weekOf(5) === 0 && weekOf(6) === 1 && weekOf(12) === 1 && weekOf(13) === 2);
 check("日の番号は日本時間の0時で変わる（2026-11-03 が #1）", dayNumber(new Date("2026-11-02T23:59:00+09:00")) === -1 && dayNumber(new Date("2026-11-03T00:00:00+09:00")) === 0 && dayNumber(new Date("2026-11-03T23:59:00+09:00")) === 0 && dayNumber(new Date("2026-11-04T00:00:00+09:00")) === 1);
 const html = readFileSync(path.join(root, "index.html"), "utf8");
