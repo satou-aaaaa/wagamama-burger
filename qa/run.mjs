@@ -452,7 +452,7 @@ try {
   const enterLink = await pq.evaluate(() => {
     __game.start(0); __game.state.cur.answer.forEach((t) => __game.add(t)); __game.finish();
     const a = document.querySelector("#after a.fb"); window.__fbClicks = 0;
-    a.addEventListener("click", (e) => { window.__fbClicks++; e.preventDefault(); }, { once: true }); a.focus();
+    a.addEventListener("click", (e) => { window.__fbClicks++; e.preventDefault(); }); a.focus(); // once を付けない（2回起きたら見つける）
     return { lv0: __game.state.lv };
   });
   await pq.keyboard.press("Enter"); // 合成のイベントではリンクの click が起きないので、本物のキー入力で
