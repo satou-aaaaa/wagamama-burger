@@ -51,13 +51,13 @@ h1{font-size:20px;margin:0}
 .row3 button{font:inherit;min-height:56px;border:2px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:4px 2px;line-height:1.25}
 .row3 button b{font-size:14px}.row3 button small{font-size:11px;color:var(--sub)}
 .log{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:0 12px;margin:12px 0}
-.log summary{cursor:pointer;min-height:44px;display:flex;align-items:center}
+.log summary{cursor:pointer;min-height:48px;display:flex;align-items:center}
 .log dl{margin:0 0 10px;display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:14px}.log dt{color:var(--sub)}.log dd{margin:0;font-weight:700}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:4px 0 12px}
 .cal i{height:26px;border-radius:6px;background:var(--bg);border:1px solid var(--line);font-style:normal;font-size:10px;display:flex;align-items:center;justify-content:center;color:var(--sub)}
 .cal i.s1{background:#f5b80055}.cal i.s2{background:#f5b800aa}.cal i.s3{background:var(--star);color:#5a3a00;font-weight:800}.cal i.today{outline:2px solid var(--acc)}
 .foot{text-align:center;font-size:12px;color:var(--sub);margin-top:16px;line-height:1.9}
-.foot a{color:var(--sub);display:inline-flex;align-items:center;min-height:44px;padding:0 10px}
+.foot a{color:var(--sub);display:inline-flex;align-items:center;min-height:48px;padding:0 10px}
 /* 遊ぶ画面 */
 .dots{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end;max-width:180px}.dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}.dots i.done{background:var(--ok)}.dots i.cur{background:var(--acc)}
 .order{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px;margin:10px 0}
@@ -125,7 +125,7 @@ button.b:disabled{opacity:.35;cursor:default}
 .banner{background:var(--card);border:2px dashed var(--acc);border-radius:14px;padding:8px 12px;margin-top:10px;font-size:14px;text-align:center}
 .guide{background:var(--card);border:2px solid var(--acc);border-radius:16px;padding:12px 14px;margin:10px 0;font-size:14px;line-height:1.7}
 .guide ol{margin:4px 0 8px;padding-left:1.4em}
-.guide button{font:inherit;font-weight:700;background:var(--acc);color:#fff;border:0;border-radius:12px;min-height:44px;padding:0 18px;cursor:pointer}
+.guide button{font:inherit;font-weight:700;background:var(--acc);color:#fff;border:0;border-radius:12px;min-height:48px;padding:0 18px;cursor:pointer}
 .after{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
 .after button{margin-top:0}
 .left{font-size:13px;font-weight:400;opacity:.9}
@@ -187,7 +187,21 @@ try {
   if (Array.isArray(s.extra)) rec.extra = s.extra;
   if (s.log && typeof s.log === "object") rec.log = s.log;
 } catch (e) {}
-function save() { try { localStorage.setItem(KEY, JSON.stringify(rec)); } catch (e) {} }
+// 保存の直前に、別のタブが保存した記録と合わせる（古いタブが新しい記録を消さないように）
+function mergeRec(a, b) {
+  if (!b || typeof b !== "object") return a;
+  if (Array.isArray(b.best)) b.best.forEach(function (v, i) { if ((v || 0) > (a.best[i] || 0)) a.best[i] = v; });
+  if (b.log && typeof b.log === "object") Object.keys(b.log).forEach(function (d) { a.log[d] = Math.max(a.log[d] || 0, b.log[d] || 0); });
+  if (b.daily && typeof b.daily.day === "number" && (!a.daily || b.daily.day > a.daily.day)) a.daily = b.daily;
+  if (b.streak && typeof b.streak.n === "number") {
+    if (b.streak.last > a.streak.last || (b.streak.last === a.streak.last && b.streak.n > a.streak.n)) a.streak = { last: b.streak.last, n: b.streak.n, max: a.streak.max };
+    a.streak.max = Math.max(a.streak.max || 0, b.streak.max || 0);
+  }
+  if (Array.isArray(b.extra)) b.extra.forEach(function (x, l) { if (x && typeof x.n === "number" && (!a.extra[l] || x.n > a.extra[l].n)) a.extra[l] = { n: x.n, run: x.run, best: Math.max(x.best || 0, a.extra[l] ? a.extra[l].best : 0), perfect: x.perfect }; });
+  a.guided = a.guided || !!b.guided;
+  return a;
+}
+function save() { try { mergeRec(rec, JSON.parse(localStorage.getItem(KEY) || "null")); localStorage.setItem(KEY, JSON.stringify(rec)); } catch (e) {} }
 function stars(i) { return rec.best[i] || 0; }
 function ex(l) { var e = rec.extra[l]; if (!e || typeof e.n !== "number") e = rec.extra[l] = { n: 0, run: 0, best: 0, perfect: 0 }; return e; }
 function chapterStars(ci) { var st = 0; for (var i = ci * PER; i < (ci + 1) * PER; i++) st += stars(i); return st; }

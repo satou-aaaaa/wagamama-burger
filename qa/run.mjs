@@ -276,13 +276,23 @@ try {
   await pq.evaluate(() => { const r = JSON.parse(localStorage.getItem("wagamamaBurger1")); r.best = Array(10).fill(3); localStorage.setItem("wagamamaBurger1", JSON.stringify(r)); });
   await pq.reload();
   check("1章を全員★3にすると、章と記録帳に王冠が付く", /👑/.test(await pq.textContent(".chap h2")) && /1章👑/.test(await pq.textContent("#logBody")));
-  // 押す所の大きさ（指で押す所は 44px 以上。積んだ具材と条件の中の絵は除く）
+  // 別のタブで新しい日を解いた後に、古いタブで前の日を解いても、新しい記録が消えない（2026-11-03 CodeRabbit 指摘）
+  const merged = await pq.evaluate(() => {
+    localStorage.clear(); __game.setToday(40); __game.startDaily();
+    const c = __game.state.cur;
+    const other = { best: [3], daily: { day: 41, solved: true, stars: 3, tries: 1, hint: false }, streak: { last: 41, n: 5, max: 5 }, log: { 41: 3 }, extra: [{ n: 9, run: 2, best: 4, perfect: 6 }] };
+    localStorage.setItem("wagamamaBurger1", JSON.stringify(other));
+    __game.setToday(41); c.answer.forEach((t) => __game.add(t)); __game.finish();
+    return JSON.parse(localStorage.getItem("wagamamaBurger1"));
+  });
+  check("別のタブの新しい記録（きょう・連続・カレンダー・おかわり・星）を、古いタブの保存で消さない", merged.daily.day === 41 && merged.streak.last === 41 && merged.streak.n === 5 && merged.log[41] === 3 && merged.extra[0].n === 9 && merged.best[0] === 3, JSON.stringify([merged.daily.day, merged.streak, merged.log, merged.extra[0]]));
+  // 押す所の大きさ（指で押す所は 48px 以上。積んだ具材と条件の中の絵は除く）
   const small = [];
   for (const view of ["title", "play"]) {
     if (view === "title") await pq.evaluate(() => __game.showTitle()); else await pq.evaluate(() => __game.start(5));
-    small.push(...(await pq.evaluate(() => [...document.querySelectorAll("button, a")].filter((b) => b.offsetParent && !b.classList.contains("ly")).map((b) => { const r = b.getBoundingClientRect(); return { n: b.id || b.className || b.textContent.trim().slice(0, 8), w: r.width, h: r.height }; }).filter((r) => r.h < 44 || r.w < 44).map((r) => `${r.n}:${Math.round(r.w)}x${Math.round(r.h)}`))));
+    small.push(...(await pq.evaluate(() => [...document.querySelectorAll("button, a, summary")].filter((b) => b.offsetParent && !b.classList.contains("ly")).map((b) => { const r = b.getBoundingClientRect(); return { n: b.id || b.className || b.textContent.trim().slice(0, 8), w: r.width, h: r.height }; }).filter((r) => r.h < 48 || r.w < 48).map((r) => `${r.n}:${Math.round(r.w)}x${Math.round(r.h)}`))));
   }
-  check("ボタンは指で押しやすい大きさ（44px 以上）", small.length === 0, small.join(" "));
+  check("ボタンは指で押しやすい大きさ（48px 以上）", small.length === 0, small.join(" "));
   await pq.close();
   // 動きを減らす設定の人には、紙吹雪を出さない
   const pr = await browser.newPage({ viewport: { width: 390, height: 800 }, reducedMotion: "reduce" });
