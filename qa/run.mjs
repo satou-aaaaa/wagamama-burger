@@ -189,7 +189,7 @@ try {
   let ds = await solveDaily(10);
   check("きょうのわがまま：一発で解くと星3つ・連続1日", ds.done && ds.stars === 3 && ds.streak === 1, JSON.stringify([ds.stars, ds.streak]));
   const dText = await pq.evaluate(() => __game.shareText("daily"));
-  check("きょうの結果のシェア文：番号・結果の絵文字・URL・タグがあり、具材の名前（答え）を書かない", /#11/.test(dText) && dText.includes("🟩") && dText.includes("https://satou-aaaaa.github.io/wagamama-burger/") && dText.includes("#わがままバーガー") && leak(dText).length === 0, leak(dText).join(","));
+  check("きょうの結果のシェア文：番号・結果の絵文字・URL・タグがあり、具材の名前（答え）を書かない", /#11/.test(dText) && dText.includes("🟩") && /^https:\/\/satou-aaaaa\.github\.io\/wagamama-burger\/$/m.test(dText) && dText.includes("#わがままバーガー") && leak(dText).length === 0, leak(dText).join(","));
   ds = await solveDaily(11);
   check("次の日も解くと2日連続", ds.streak === 2, String(ds.streak));
   await pq.evaluate(() => { __game.setToday(11); __game.startDaily(); });
