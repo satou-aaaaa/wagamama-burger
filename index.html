@@ -23,7 +23,7 @@
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#22170f;--ink:#fbead6;--sub:#c7a787;--card:#2f2117;--line:#4a3424;--acc:#ff7a45;--ok:#5fd08a;--ng:#ff6b9a;--stage1:#4a3020;--stage2:#3a2618}}
 :root[data-theme="dark"]{--bg:#22170f;--ink:#fbead6;--sub:#c7a787;--card:#2f2117;--line:#4a3424;--acc:#ff7a45;--ok:#5fd08a;--ng:#ff6b9a;--stage1:#4a3020;--stage2:#3a2618}
 *{box-sizing:border-box}
-html,body{overflow-x:hidden}
+html{overflow-x:hidden}body{overflow-x:clip} /* body を hidden にすると下の .dock の sticky が効かない */
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Maru Gothic ProN","M PLUS Rounded 1c","Yu Gothic UI",system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
 main{max-width:460px;margin:0 auto;padding:12px 16px 28px}
 [hidden]{display:none!important}
@@ -81,7 +81,6 @@ ul.conds li.newc::after{content:"NEW";font-size:10px;font-weight:800;color:#fff;
 @keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
 .stage{position:relative;height:350px;transition:height .2s;background:linear-gradient(var(--stage1),var(--stage2));border-radius:18px;border:2px solid var(--line);display:flex;flex-direction:column-reverse;align-items:center;padding-bottom:14px;overflow:hidden}
 .plate{position:absolute;bottom:6px;width:78%;height:12px;background:#fff;border-radius:50%;box-shadow:0 3px 0 #0002}
-.stage.tall{height:410px}
 .ly{position:relative;display:block;width:62%;margin-top:-2px;cursor:pointer;animation:drop .35s cubic-bezier(.3,1.4,.5,1);border:0;padding:0;font:inherit;color:inherit}
 .ly .num{position:absolute;left:-34px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--sub);width:24px;text-align:right}
 .ly.hint{outline:3px dashed var(--acc);outline-offset:3px;z-index:3}
@@ -97,6 +96,7 @@ ul.conds li.newc::after{content:"NEW";font-size:10px;font-weight:800;color:#fff;
 .t-bacon{height:16px;width:66%;background:repeating-linear-gradient(90deg,#c0392b 0 10px,#f5b7a8 10px 14px);border-radius:4px;transform:skewX(-8deg)}
 .t-onion{height:16px;width:60%;background:transparent;border:4px solid #d9bde6;border-radius:50%}
 .tray{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin:12px 0 4px;min-height:60px}
+.tray:empty{min-height:0;margin:4px 0 0}
 .ing{border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:6px 10px;display:flex;flex-direction:column;align-items:center;gap:5px;font:inherit;font-size:12px;cursor:pointer;min-width:66px;min-height:56px;justify-content:flex-end}
 .ing .ly{width:44px!important;animation:none;margin:0;cursor:inherit}
 .ing.hint{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc)}
@@ -135,6 +135,7 @@ button.b:disabled{opacity:.35;cursor:default}
 .guide{background:var(--card);border:2px solid var(--acc);border-radius:16px;padding:12px 14px;margin:10px 0;font-size:14px;line-height:1.7}
 .guide ol{margin:4px 0 8px;padding-left:1.4em}
 .guide button{font:inherit;font-weight:700;background:var(--acc);color:#fff;border:0;border-radius:12px;min-height:48px;padding:0 18px;cursor:pointer}
+.dock{position:sticky;bottom:0;z-index:4;background:var(--bg);padding:2px 0 calc(8px + env(safe-area-inset-bottom));box-shadow:0 -10px 10px -10px #0003}
 .after{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
 .after button{margin-top:0}
 .left{font-size:13px;font-weight:400;opacity:.9}
@@ -166,11 +167,11 @@ button.b:disabled{opacity:.35;cursor:default}
   <div class="guide" id="guide" hidden><b>あそびかた</b><ol><li>お客さんの条件を読む</li><li>下の具材をタップして、下から積む（積んだ具はタップで外せる）</li><li>全部積んだら「できあがり！」</li></ol><button id="guideOk">わかった</button> <a class="fb" href="https://github.com/satou-aaaaa/wagamama-burger/issues/new?template=feedback.yml" target="_blank" rel="noopener">💬 感想を送る</a></div>
   <div class="stage" id="stage"><div class="plate"></div><div class="toast" id="toast" role="status" aria-live="polite"></div></div>
   <div class="note" id="note"></div>
-  <div class="tray" id="tray"></div>
-  <button class="b" id="go" disabled>できあがり！</button>
-  <div class="after" id="after" hidden><button class="b sec" id="shareQ">🤝 この注文を出題</button><button class="b sec" id="shareR">📣 結果をシェア</button><a class="fb" href="https://github.com/satou-aaaaa/wagamama-burger/issues/new?template=feedback.yml" target="_blank" rel="noopener">💬 感想を送る</a></div>
+  <div class="dock" id="dock"><div class="tray" id="tray"></div>
+  <button class="b" id="go" disabled>できあがり！</button></div>
+  <div class="after" id="after" hidden><button class="b sec" id="shareQ">🤝 出題する</button><button class="b sec" id="shareR">📣 結果をシェア</button><a class="fb" href="https://github.com/satou-aaaaa/wagamama-burger/issues/new?template=feedback.yml" target="_blank" rel="noopener">💬 感想を送る</a></div>
   <p class="kofi" id="kofi" hidden>楽しめたら、<a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi でコーヒー1杯の応援</a>をもらえると、新しいお客さんづくりの励みになります（任意・遊ぶのはずっと無料）。</p>
-  <div class="sub"><button id="undo">ひとつ戻す</button><button id="retry">やり直す</button><button id="hint">ヒント</button></div>
+  <div class="sub" id="sub"><button id="undo">ひとつ戻す</button><button id="retry">やり直す</button><button id="hint">ヒント</button></div>
 </section>
 
 </main>
@@ -196,18 +197,25 @@ try {
   if (s.streak && typeof s.streak.n === "number") rec.streak = s.streak;
   if (Array.isArray(s.extra)) rec.extra = s.extra;
   if (s.log && typeof s.log === "object") rec.log = s.log;
+  fixStreak(rec);
 } catch (e) {}
 // 保存の直前に、別のタブが保存した記録と合わせる（古いタブが新しい記録を消さないように）
+// 連続日数：カレンダー（log）の解いた日から数える。記録の正はカレンダーだけにして、ずれが起きないようにする
+function fixStreak(r) {
+  var days = Object.keys(r.log).filter(function (d) { return r.log[d] > 0; }).map(Number).sort(function (x, y) { return x - y; });
+  var longest = 0, run = 0;
+  days.forEach(function (d, i) { run = i && days[i - 1] === d - 1 ? run + 1 : 1; longest = Math.max(longest, run); });
+  r.streak = { last: days.length ? days[days.length - 1] : -99, n: run, max: Math.max(r.streak.max || 0, longest) };
+}
 function mergeRec(a, b) {
   if (!b || typeof b !== "object") return a;
   if (Array.isArray(b.best)) b.best.forEach(function (v, i) { if ((v || 0) > (a.best[i] || 0)) a.best[i] = v; });
   // きょうのわがままは1日1回。同じ日は先に保存した結果（別のタブが先に解いた結果）を残す
   if (b.log && typeof b.log === "object") Object.keys(b.log).forEach(function (d) { if (b.log[d]) a.log[d] = b.log[d]; });
   if (b.daily && typeof b.daily.day === "number" && (!a.daily || b.daily.day >= a.daily.day)) a.daily = b.daily;
-  if (b.streak && typeof b.streak.n === "number") {
-    if (b.streak.last > a.streak.last || (b.streak.last === a.streak.last && b.streak.n > a.streak.n)) a.streak = { last: b.streak.last, n: b.streak.n, max: a.streak.max };
-    a.streak.max = Math.max(a.streak.max || 0, b.streak.max || 0);
-  }
+  // 連続日数は合わせたカレンダー（log）から数え直す。タブごとの数を比べて選ぶと、どちらかの日が抜ける
+  if (b.streak) a.streak.max = Math.max(a.streak.max || 0, b.streak.max || 0);
+  fixStreak(a);
   // n と run は解いた数の多いほう。best と perfect は n に関係なく大きいほう（記録を減らさない）
   if (Array.isArray(b.extra)) b.extra.forEach(function (x, l) {
     if (!x || typeof x.n !== "number") return;
@@ -261,7 +269,7 @@ function toggleSound() { rec.muted = !rec.muted; save(); soundIcon(); SND.put();
 function streakNow() { return rec.streak.last >= today() - 1 ? rec.streak.n : 0; }
 // 次のきょうのわがまま（日本時間の0時）までの時間
 function untilNext(now) { var ms = 86400000 - ((now || Date.now()) + 9 * 3600000) % 86400000, m = Math.ceil(ms / 60000); return Math.floor(m / 60) + "時間" + (m % 60) + "分"; }
-function dailyDone(day) { if (day === undefined) day = today(); return !!(rec.daily && rec.daily.day === day && rec.daily.solved); }
+function dailyDone(day) { if (day === undefined) day = today(); return rec.log[day] > 0; }
 
 // --- タイトル ---
 function nextLevel() { for (var i = 0; i < LEVELS.length; i++) if (!stars(i)) return i; return LEVELS.length - 1; }
@@ -269,14 +277,14 @@ var shownDay = null;
 // タイトルを開いたままでも、残り時間を進め、日が変わったら新しい問題に替える
 setInterval(function () {
   if ($("title").hidden) return;
-  if (today() !== shownDay) showTitle(); else if (dailyDone()) $("dailySub").textContent = "#" + (today() + 1) + " クリア済み ★" + rec.daily.stars + "・次まで " + untilNext();
+  if (today() !== shownDay) showTitle(); else if (dailyDone()) $("dailySub").textContent = "#" + (today() + 1) + " クリア済み ★" + rec.log[today()] + "・次まで " + untilNext();
 }, 30000);
 function showTitle() {
   shownDay = today();
   $("play").hidden = true; $("title").hidden = false; $("banner").hidden = true;
   var d = makeDaily(today());
   $("dailyFace").textContent = d.face;
-  $("dailySub").textContent = dailyDone() ? "#" + (today() + 1) + " クリア済み ★" + rec.daily.stars + "・次まで " + untilNext() : "#" + (today() + 1) + "・毎日1問、みんな同じ注文";
+  $("dailySub").textContent = dailyDone() ? "#" + (today() + 1) + " クリア済み ★" + rec.log[today()] + "・次まで " + untilNext() : "#" + (today() + 1) + "・毎日1問、みんな同じ注文";
   var n = streakNow();
   $("streak").textContent = n ? "🔥 " + n + "日連続（最高 " + rec.streak.max + "日）" : rec.streak.max ? "連続がとぎれました。きょうから、また" : "";
   $("cont").textContent = clearedCount() ? "つづきから（" + (nextLevel() + 1) + "人目）" : "はじめから";
@@ -324,7 +332,7 @@ function distHtml() {
 }
 
 // --- 遊ぶ画面 ---
-var kofiShow = false; // Ko-fi のひとことは、章を初めてクリアした結果の画面でだけ出す（shared の kofi/app-guide.md）
+var kofiShow = false, dailyShare = null; // Ko-fi のひとことは、章を初めてクリアした結果の画面でだけ出す（shared の kofi/app-guide.md）
 var cur = null, lv = 0, mode = "level", stack = [], left = [], done = false, judged = null, hintAt = null, hintIng = null, usedHint = false, tries = 0, drawn = 0, lastStars = 0;
 function chapterOf(i) { return Math.floor(i / PER); }
 function isNewCond(c) {
@@ -334,12 +342,29 @@ function isNewCond(c) {
   var kinds = { 1: ["apart", "same", "notBottom"], 2: ["gap"] }[ch] || [];
   return kinds.indexOf(c[0]) >= 0;
 }
+// 台の高さを、できあがりのバーガー（全部の具＋上下のパン）と星の分だけにする。
+// 小さい画面でも具材と「できあがり！」まで届きやすくするため（大きすぎる台で下へ押し出さない）
+function fitStage(items) {
+  var sg = $("stage"), h = 0;
+  ["bun-b", "bun-t"].concat(items).forEach(function (t) {
+    var d = layer(t); d.style.cssText = "position:absolute;visibility:hidden;animation:none"; sg.appendChild(d); h += d.offsetHeight - 2; d.remove();
+  });
+  stageFull = Math.max(220, h + 18 + 96); // 18 = 下の余白と枠、96 = 星とひとことの場所
+}
+// 積んでいる間は、いま積んだ分＋次の1枚の場所だけ（条件が画面から押し出されないように）。できあがったら全体
+var stageFull = 350;
+function sizeStage() {
+  var sg = $("stage"), h = 0;
+  if (!done) sg.querySelectorAll(".ly").forEach(function (e) { h += e.offsetHeight - 2; });
+  sg.style.height = (done ? stageFull : Math.min(stageFull, Math.max(150, h + 18 + 70))) + "px";
+}
 function begin(p) {
+  dailyShare = null;
   cur = p; stack = []; left = p.items.slice(); done = false; judged = null; hintAt = hintIng = null; usedHint = false; tries = 0; drawn = 0;
   $("title").hidden = true; $("play").hidden = false; $("after").hidden = true;
   $("stage").querySelectorAll(".stars,.confetti").forEach(function (e) { e.remove(); });
   $("guide").hidden = rec.guided;
-  $("stage").classList.toggle("tall", p.items.length >= 8); // 具8枚でも上のパンが台に収まるように
+  fitStage(p.items);
   render(true); scrollTo(0, 0);
 }
 function start(i, fromLink) {
@@ -350,7 +375,7 @@ function start(i, fromLink) {
 function startDaily() {
   mode = "daily"; begin(makeDaily(today()));
   $("banner").hidden = !dailyDone();
-  if (dailyDone()) $("banner").textContent = "きょうの分はクリア済み（★" + rec.daily.stars + "）。もう一度遊べます";
+  if (dailyDone()) $("banner").textContent = "きょうの分はクリア済み（★" + rec.log[cur.daily] + "）。もう一度遊べます";
 }
 var exLv = 0, exCache = {};
 // おかわりは作るのに少し時間がかかる（達人で最大0.2秒ほど）ので、次の問題を手のあいたときに先に作っておく
@@ -384,6 +409,7 @@ function render(full) {
   });
   if (done) { var tp = layer("bun-t"); tp.tabIndex = -1; tp.setAttribute("aria-label", "上のパン"); if (drawn > stack.length) tp.style.animation = "none"; sg.appendChild(tp); drawn = stack.length + 1; }
   else drawn = stack.length;
+  sizeStage();
   var cnt = {}; left.forEach(function (t) { cnt[t] = (cnt[t] || 0) + 1; });
   $("tray").innerHTML = "";
   Object.keys(cnt).forEach(function (t, ki) {
@@ -398,12 +424,21 @@ function render(full) {
   g.innerHTML = done ? (mode === "daily" ? "タイトルへ" : mode === "extra" ? "次のおかわり ▶" : lv < LEVELS.length - 1 ? "次のお客さん ▶" : "全員クリア！タイトルへ")
     : left.length ? 'できあがり！ <span class="left">（あと' + left.length + "個）</span>" : "できあがり！";
   $("undo").disabled = !stack.length || done; $("hint").disabled = done; $("retry").disabled = !stack.length;
-  $("after").hidden = !done; $("shareQ").hidden = mode !== "level";
+  $("after").hidden = !done; $("shareQ").hidden = mode !== "level"; $("sub").hidden = done;
   if (!done) kofiShow = false;
   $("kofi").hidden = !(done && kofiShow);
 }
 function toast(s) { var t = $("toast"); t.textContent = s; t.classList.add("on"); clearTimeout(toast.h); toast.h = setTimeout(function () { t.classList.remove("on"); }, 1800); }
-function add(t) { if (done) return; var i = left.indexOf(t); if (i < 0) return; left.splice(i, 1); stack.push(t); judged = null; hintAt = hintIng = null; SND.put(); buzz(8); render(); }
+function add(t) { if (done) return; var i = left.indexOf(t); if (i < 0) return; left.splice(i, 1); stack.push(t); judged = null; hintAt = hintIng = null; SND.put(); buzz(8); render(); showStack(); }
+// 下に止まる具材の棚（.dock）の後ろに、積んだバーガーが隠れないよう、台の下の端を棚のすぐ上まで送る
+// 台の高さが伸びる動き（0.2秒）が終わってから測る
+function showStack() {
+  clearTimeout(showStack.h);
+  showStack.h = setTimeout(function () {
+    var s = $("stage").getBoundingClientRect(), d = $("dock").getBoundingClientRect(), gap = s.bottom - d.top + 6;
+    if (gap > 0) scrollBy({ top: gap, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+  }, 230);
+}
 function remove(i) { if (done) return; left.push(stack[i]); stack.splice(i, 1); judged = null; hintAt = hintIng = null; drawn = i; SND.off(); render(); }
 function confetti() {
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -411,14 +446,14 @@ function confetti() {
   for (var k = 0; k < 28; k++) { var c = document.createElement("i"); c.className = "confetti"; c.style.left = (Math.random() * 100) + "%"; c.style.background = cs[k % cs.length]; c.style.animationDelay = (Math.random() * 0.4) + "s"; $("stage").appendChild(c); }
 }
 // d は解いた問題の日（日付をまたいで解いても、その問題の日として記録する）
+// 1日1回：カレンダーにその日の星が無いときだけ書く。あとから前の日を解いても、その日の分として入る
 function recordDaily(n, d) {
   if (d === undefined) d = today();
-  if (dailyDone(d) || (rec.daily && rec.daily.day > d) || rec.streak.last >= d) return;
-  rec.daily = { day: d, solved: true, stars: n, tries: tries, hint: usedHint };
-  if (rec.streak.last === d - 1) rec.streak.n += 1; else rec.streak.n = 1;
-  rec.streak.last = d; rec.streak.max = Math.max(rec.streak.max || 0, rec.streak.n);
+  if (dailyDone(d)) return;
   rec.log[d] = n;
+  if (!rec.daily || d >= rec.daily.day) rec.daily = { day: d, solved: true, stars: n, tries: tries, hint: usedHint };
   Object.keys(rec.log).forEach(function (k) { if (+k < d - 400) delete rec.log[k]; });
+  fixStreak(rec);
 }
 // おかわり：解くたびに次の問題へ。★3（一発・ヒントなし）が続いた数を数える
 function recordExtra(n) {
@@ -443,7 +478,9 @@ function finish() {
     else { first = !stars(lv); rec.best[lv] = Math.max(stars(lv), n); }
     kofiShow = mode === "level" && first && (lv + 1) % PER === 0;
     save();
-    render(); SND.win(); buzz([20, 40, 20]); confetti();
+    // 結果画面のシェアは、いま解いた日の記録で（別のタブが先にその日を解いていたら、その記録）
+    if (mode === "daily") dailyShare = rec.daily && rec.daily.day === cur.daily ? rec.daily : { day: cur.daily, solved: true, stars: rec.log[cur.daily] || n, tries: tries, hint: usedHint };
+    render(); showStack(); SND.win(); buzz([20, 40, 20]); confetti();
     var st = document.createElement("div"); st.className = "stars"; st.setAttribute("aria-label", "星" + n + "つ");
     st.innerHTML = [0, 1, 2].map(function (k) { return '<span class="' + (k < n ? "" : "off") + '" style="animation-delay:' + (0.2 + k * 0.15) + 's">★</span>'; }).join("");
     $("stage").appendChild(st);
@@ -470,8 +507,9 @@ function hint() {
 function starStr(n) { return "★★★☆☆☆".slice(3 - n, 6 - n); }
 function triesStr(t, h) { var a = []; for (var i = 1; i < t; i++) a.push("🟥"); a.push("🟩"); return (h ? "💡" : "") + a.join(""); }
 function shareText(kind) {
-  if (kind === "daily" && rec.daily && rec.daily.solved) {
-    return "🍔 きょうのわがまま #" + (rec.daily.day + 1) + "\n" + triesStr(rec.daily.tries, rec.daily.hint) + " " + starStr(rec.daily.stars) + (streakNow() > 1 ? "\n🔥 " + streakNow() + "日連続" : "") + "\n" + SITE + "\n" + TAG;
+  var dd = kind === "daily" ? (dailyShare || (rec.daily && rec.daily.solved ? rec.daily : null)) : null;
+  if (dd) {
+    return "🍔 きょうのわがまま #" + (dd.day + 1) + "\n" + triesStr(dd.tries, dd.hint) + " " + starStr(dd.stars) + (streakNow() > 1 ? "\n🔥 " + streakNow() + "日連続" : "") + "\n" + SITE + "\n" + TAG;
   }
   if (kind === "extra") { var x = ex(exLv); return "🍔 わがままバーガー おかわり・" + EXTRA[exLv].name + " " + x.n + "問目\n" + triesStr(tries, usedHint) + " " + starStr(lastStars) + (x.run > 1 ? "\n✨ ノーミス " + x.run + "連続" : "") + "\n" + SITE + "\n" + TAG; }
   if (kind === "challenge") return "🍔 この注文、解ける？\n" + LEVELS[lv].face + " お客さん" + (lv + 1) + "（条件" + LEVELS[lv].conds.length + "つ）\n" + SITE + "?q=" + (lv + 1) + "\n" + TAG;
@@ -526,5 +564,5 @@ if (q >= 1 && q <= LEVELS.length && Math.floor(q) === q) start(q - 1, true); els
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(function () {});
 // 検査（qa/run.mjs）用の窓口
 window.__game = { untilNext: untilNext, mergeRec: mergeRec, exCached: function (l, k) { return !!exCache[l + ":" + k]; }, start: start, startDaily: startDaily, startExtra: startExtra, rec: function () { return JSON.parse(JSON.stringify(rec)); }, add: add, finish: finish, showTitle: showTitle, shareText: shareText, flash: flash, setToday: function (d) { todayOverride = d; },
-  get state() { return { lv: lv, mode: mode, stack: stack.slice(), left: left.slice(), done: done, judged: judged, stars: mode === "daily" ? (rec.daily && rec.daily.day === today() ? rec.daily.stars : 0) : mode === "extra" ? (done ? lastStars : 0) : stars(lv), streak: streakNow(), cur: cur }; } };
+  get state() { return { lv: lv, mode: mode, stack: stack.slice(), left: left.slice(), done: done, judged: judged, stars: mode === "daily" ? (rec.log[today()] || 0) : mode === "extra" ? (done ? lastStars : 0) : stars(lv), streak: streakNow(), cur: cur }; } };
 </script></body></html>

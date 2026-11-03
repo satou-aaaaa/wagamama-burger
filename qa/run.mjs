@@ -252,7 +252,7 @@ try {
   check("日付をまたいで解いた問題はその日の記録になり、次の日の問題も記録され、日が変わってもその結果をシェアできる", /#41\n/.test(s40[1]) && s40[0] === 1 && ds.streak === 2 && /#42\n/.test(s41), JSON.stringify([s40, ds.streak, s41.split("\n")[0]]));
   // 出題・結果のシェア文
   await pq.evaluate(() => __game.start(0)); for (const t of LEVELS[0].answer) await pq.click(`.ing[data-t="${t}"]`); await pq.click("#go");
-  check("クリアすると「この注文を出題」「結果をシェア」が出る", await pq.locator("#shareQ").isVisible() && await pq.locator("#shareR").isVisible());
+  check("クリアすると「出題する」「結果をシェア」が出て、使えない「ひとつ戻す・ヒント」の列は隠れる", await pq.locator("#shareQ").isVisible() && await pq.locator("#shareR").isVisible() && !(await pq.locator("#sub").isVisible()));
   const cText = await pq.evaluate(() => __game.shareText("challenge")), lText = await pq.evaluate(() => __game.shareText("level"));
   check("出題の文は ?q=番号 の URL 付きで、答えを書かない", cText.includes("?q=1\n") && lText.includes("?q=1\n") && leak(cText + lText).length === 0, leak(cText + lText).join(","));
   // 出題の文は台詞にも具材の名前が出ることがあるので、全員分で確かめる（2026-11-03 CodeRabbit 指摘：2人目の台詞に「パティ」）
@@ -321,12 +321,12 @@ try {
   const merged = await pq.evaluate(() => {
     localStorage.clear(); __game.setToday(40); __game.startDaily();
     const c = __game.state.cur;
-    const other = { best: [3], daily: { day: 41, solved: true, stars: 3, tries: 1, hint: false }, streak: { last: 41, n: 5, max: 5 }, log: { 41: 3 }, extra: [{ n: 9, run: 2, best: 4, perfect: 6 }] };
+    const other = { best: [3], daily: { day: 41, solved: true, stars: 3, tries: 1, hint: false }, streak: { last: 41, n: 4, max: 4 }, log: { 38: 2, 39: 3, 41: 3 }, extra: [{ n: 9, run: 2, best: 4, perfect: 6 }] };
     localStorage.setItem("wagamamaBurger1", JSON.stringify(other));
     __game.setToday(41); c.answer.forEach((t) => __game.add(t)); __game.finish();
     return JSON.parse(localStorage.getItem("wagamamaBurger1"));
   });
-  check("別のタブの新しい記録（きょう・連続・カレンダー・おかわり・星）を、古いタブの保存で消さない", merged.daily.day === 41 && merged.streak.last === 41 && merged.streak.n === 5 && merged.log[41] === 3 && merged.extra[0].n === 9 && merged.best[0] === 3, JSON.stringify([merged.daily.day, merged.streak, merged.log, merged.extra[0]]));
+  check("別のタブの新しい記録（きょう・連続・カレンダー・おかわり・星）を、古いタブの保存で消さない", merged.daily.day === 41 && merged.streak.last === 41 && merged.streak.n === 4 && merged.log[41] === 3 && merged.log[40] === 3 && merged.extra[0].n === 9 && merged.best[0] === 3, JSON.stringify([merged.daily.day, merged.streak, merged.log, merged.extra[0]]));
   // 解いた数はこのタブが多くても、別のタブのノーミス最高・★3の数は残す（2026-11-03 CodeRabbit 指摘）
   const mergedEx = await pq.evaluate(() => {
     const a = { best: [], log: {}, daily: null, streak: { last: -1, n: 0, max: 0 }, extra: [{ n: 6, run: 1, best: 1, perfect: 2 }], guided: false };
@@ -340,6 +340,27 @@ try {
     return [r.daily.stars, r.log[41], r.log[40]];
   });
   check("同じ日のきょうのわがままは、先に保存した結果を残す（星とカレンダーがそろう）", sameDay.join() === "2,2,1", sameDay.join());
+  // 連続日数はカレンダー（log）から数え直す（2026-11-03 CodeRabbit 指摘：タブごとの連続数を比べて選ぶと日が抜けた）
+  const streakCases = await pq.evaluate(() => {
+    const base = () => ({ best: [], log: {}, daily: null, streak: { last: -99, n: 0, max: 0 }, extra: [], guided: false });
+    // 保存済みは D=600 まで 501 日連続、このタブは D+1 だけ → 502 日連続
+    const stored = { log: {} }; for (let d = 100; d <= 600; d++) stored.log[d] = 2; stored.streak = { last: 600, n: 501, max: 501 };
+    const a = base(); a.log[601] = 3; const r1 = __game.mergeRec(a, stored).streak;
+    // 離れた日どうしは、新しいほうから数える
+    const b = base(); b.log[50] = 3; const r2 = __game.mergeRec(b, { log: { 40: 1, 41: 1, 42: 1 }, streak: { last: 42, n: 3, max: 3 } }).streak;
+    return [r1, r2];
+  });
+  check("連続日数は合わせたカレンダーから数える（501日＋次の日＝502日、離れた日は新しいほうから）", streakCases[0].last === 601 && streakCases[0].n === 502 && streakCases[0].max === 502 && streakCases[1].last === 50 && streakCases[1].n === 1 && streakCases[1].max === 3, JSON.stringify(streakCases));
+  // 次の日の記録を取り込んだあとで前の日を解いても、前の日がカレンダーと連続に入り、シェアはその日の結果になる
+  const lateDay = await pq.evaluate(() => {
+    localStorage.clear(); __game.setToday(60); __game.startDaily();
+    const c = __game.state.cur;
+    localStorage.setItem("wagamamaBurger1", JSON.stringify({ best: [], daily: { day: 61, solved: true, stars: 1, tries: 2, hint: true }, log: { 59: 3, 61: 1 }, streak: { last: 61, n: 1, max: 1 } }));
+    __game.setToday(61); c.answer.forEach((t) => __game.add(t)); __game.finish();
+    const saved = JSON.parse(localStorage.getItem("wagamamaBurger1"));
+    return { log: saved.log, streak: saved.streak, daily: saved.daily.day, share: __game.shareText("daily").split("\n").slice(0, 2).join("|") };
+  });
+  check("前の日をあとから解いても、その日がカレンダーと連続に入り（3日連続）、シェアはその日の結果", lateDay.log[60] === 3 && lateDay.log[61] === 1 && lateDay.streak.n === 3 && lateDay.daily === 61 && /#61\|.*★★★/.test(lateDay.share), JSON.stringify(lateDay));
   // 押す所の大きさ（指で押す所は 48px 以上。積んだ具材と条件の中の絵は除く）
   const small = [];
   for (const view of ["title", "play"]) {
@@ -364,7 +385,7 @@ try {
     const big = LEVELS.findIndex((L) => L.items.length === Math.max(...LEVELS.map((x) => x.items.length)));
     await p.evaluate((i) => __game.start(i), big);
     for (const t of LEVELS[big].answer) await p.click(`.ing[data-t="${t}"]`);
-    await p.click("#go");
+    await p.click("#go"); await p.waitForTimeout(500); // 上のパンが落ちてくる動きを待つ
     if (await p.evaluate(() => document.documentElement.scrollWidth > innerWidth)) wide.push(`${w}:遊ぶ画面`);
     const fits = await p.evaluate(() => { const s = document.querySelector(".stage").getBoundingClientRect(), t = document.querySelector(".stage .t-bun-t").getBoundingClientRect(); return t.top >= s.top && t.left >= s.left && t.right <= s.right; });
     if (!fits) wide.push(`${w}:上のパンがはみ出す`);
@@ -372,6 +393,28 @@ try {
     await p.close();
   }
   check("スマホ幅で横にはみ出さず、いちばん大きいバーガーも台に収まる", wide.length === 0, wide.join(","));
+
+  // 8b. 小さいスマホ（375×667）でも、具材の棚と「できあがり！」に指が届き、積んだバーガーが棚の後ろに隠れない。
+  //     積んでいる間は条件も画面に残る（2026-11-03 4章で棚が画面の下に押し出され、毎回スクロールが要った）
+  {
+    const p = await browser.newPage({ viewport: { width: 375, height: 667 } });
+    await p.goto(url); await p.evaluate(() => { localStorage.setItem("wagamamaBurger1", JSON.stringify({ best: [], guided: true })); }); await p.reload();
+    const bad = [];
+    for (const i of [0, 10, 20, LEVELS.findIndex((L) => L.items.length === 8)]) {
+      await p.evaluate((k) => __game.start(k), i); await p.waitForTimeout(250);
+      const inView = (sel) => p.evaluate((q) => { const r = document.querySelector(q).getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight + 1; }, sel);
+      if (!(await inView("#go"))) bad.push(`${i + 1}人目:できあがりが画面の外`);
+      for (const [k, t] of LEVELS[i].answer.entries()) {
+        await p.click(`.ing[data-t="${t}"]`); await p.waitForTimeout(700);
+        const r = await p.evaluate(() => { const s = document.querySelector(".stage").getBoundingClientRect(), d = document.querySelector("#dock").getBoundingClientRect(), c = document.querySelector("#conds").getBoundingClientRect(); return { hidden: s.bottom > d.top + 1, go: d.bottom <= innerHeight + 1, conds: c.bottom > 0 }; });
+        if (r.hidden) bad.push(`${i + 1}人目${k + 1}枚目:バーガーが棚に隠れる`);
+        if (!r.go) bad.push(`${i + 1}人目${k + 1}枚目:棚が画面の外`);
+        if (k < LEVELS[i].answer.length - 1 && !r.conds) bad.push(`${i + 1}人目${k + 1}枚目:条件が見えない`);
+      }
+    }
+    await p.close();
+    check("小さいスマホでも、棚と「できあがり！」に届き、積んだバーガーと条件が見えたまま遊べる", bad.length === 0, bad.slice(0, 5).join(","));
+  }
 
   // 9. PWA：ホーム画面に置ける形と、一度開けば電波が無くても遊べる（http で開いて確かめる）
   const types = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".webmanifest": "application/manifest+json", ".png": "image/png" };
