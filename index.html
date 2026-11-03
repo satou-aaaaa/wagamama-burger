@@ -55,6 +55,11 @@ h1{font-size:20px;margin:0}
 .log dl{margin:0 0 10px;display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:14px}.log dt{color:var(--sub)}.log dd{margin:0;font-weight:700}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:4px 0 12px}
 .cal i{height:26px;border-radius:6px;background:var(--bg);border:1px solid var(--line);font-style:normal;font-size:10px;display:flex;align-items:center;justify-content:center;color:var(--sub)}
+.after a.fb,.guide a.fb{display:inline-flex;align-items:center;min-height:48px;padding:0 12px;color:var(--sub);font-size:14px}
+.zt{display:block;font-size:13px;margin:4px 0}
+.zukan{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin:0 0 12px}
+.zukan i{aspect-ratio:1;border-radius:8px;background:var(--bg);border:1px solid var(--line);font-style:normal;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--sub)}
+.zukan i.s3{border:2px solid var(--star)}
 .cal i.s1{background:#f5b80055}.cal i.s2{background:#f5b800aa}.cal i.s3{background:var(--star);color:#5a3a00;font-weight:800}.cal i.today{outline:2px solid var(--acc)}
 .ing .k{display:none;position:absolute;top:2px;left:5px;font-size:10px;color:var(--sub)}
 @media (hover:hover) and (pointer:fine){.ing .k{display:block}}
@@ -150,19 +155,19 @@ button.b:disabled{opacity:.35;cursor:default}
   <div class="extra"><h2>🍟 おかわり</h2><div class="new">練習問題がいくらでも出ます。ノーミス（★3）を何問つづけられるか</div><div class="row3" id="extras"></div></div>
   <div id="chapters"></div>
   <details class="log" id="log"><summary>📒 記録帳</summary><div id="logBody"></div></details>
-  <div class="foot">時間制限なし・広告なし・記録はこの端末の中だけ<br><a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">☕ 作者を応援する（Ko-fi）</a></div>
+  <div class="foot">時間制限なし・広告なし・記録はこの端末の中だけ<br><a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">☕ 作者を応援する（Ko-fi）</a><br><a class="fb" href="https://github.com/satou-aaaaa/wagamama-burger/issues/new?template=feedback.yml" target="_blank" rel="noopener">💬 感想を送る</a></div>
 </section>
 
 <section id="play" hidden>
   <header><button class="icon" id="back" aria-label="もどる">◀</button><div class="dots" id="dots"></div><button class="icon" id="sound2" aria-label="音">🔊</button></header>
   <div class="banner" id="banner" hidden></div>
   <section class="order"><div class="who"><div class="face" id="face"></div><div><div class="lv" id="lv"></div><div class="say" id="say"></div></div></div><ul class="conds" id="conds"></ul></section>
-  <div class="guide" id="guide" hidden><b>あそびかた</b><ol><li>お客さんの条件を読む</li><li>下の具材をタップして、下から積む（積んだ具はタップで外せる）</li><li>全部積んだら「できあがり！」</li></ol><button id="guideOk">わかった</button></div>
+  <div class="guide" id="guide" hidden><b>あそびかた</b><ol><li>お客さんの条件を読む</li><li>下の具材をタップして、下から積む（積んだ具はタップで外せる）</li><li>全部積んだら「できあがり！」</li></ol><button id="guideOk">わかった</button> <a class="fb" href="https://github.com/satou-aaaaa/wagamama-burger/issues/new?template=feedback.yml" target="_blank" rel="noopener">💬 感想を送る</a></div>
   <div class="stage" id="stage"><div class="plate"></div><div class="toast" id="toast" role="status" aria-live="polite"></div></div>
   <div class="note" id="note"></div>
   <div class="tray" id="tray"></div>
   <button class="b" id="go" disabled>できあがり！</button>
-  <div class="after" id="after" hidden><button class="b sec" id="shareQ">🤝 この注文を出題</button><button class="b sec" id="shareR">📣 結果をシェア</button></div>
+  <div class="after" id="after" hidden><button class="b sec" id="shareQ">🤝 この注文を出題</button><button class="b sec" id="shareR">📣 結果をシェア</button><a class="fb" href="https://github.com/satou-aaaaa/wagamama-burger/issues/new?template=feedback.yml" target="_blank" rel="noopener">💬 感想を送る</a></div>
   <div class="sub"><button id="undo">ひとつ戻す</button><button id="retry">やり直す</button><button id="hint">ヒント</button></div>
 </section>
 
@@ -300,7 +305,13 @@ function showLog() {
   $("logBody").innerHTML = "<dl><dt>お客さん</dt><dd>" + clearedCount() + "/" + LEVELS.length + "人・★" + total() + "/" + LEVELS.length * 3 + "（★3は" + three + "人）</dd>" +
     "<dt>章</dt><dd>" + crowns + "</dd><dt>きょうの</dt><dd>解いた日 " + days + "日・最高 " + (rec.streak.max || 0) + "日連続</dd>" +
     EXTRA.map(function (e, l) { var x = ex(l); return "<dt>" + e.name + "</dt><dd>" + x.n + "問・★3 " + (x.perfect || 0) + "問・ノーミス最高 " + x.best + "</dd>"; }).join("") +
-    "</dl>" + distHtml() + '<div class="cal" aria-label="きょうのわがまま 直近4週">' + cal + "</div>";
+    "</dl>" + distHtml() + '<div class="cal" aria-label="きょうのわがまま 直近4週">' + cal + "</div>" + zukanHtml();
+}
+// お客さん図鑑：満足させたお客さんの顔が並ぶ（まだの人は ？）。★3 の人は金色の枠
+function zukanHtml() {
+  return '<b class="zt">お客さん図鑑 ' + clearedCount() + "/" + LEVELS.length + '</b><div class="zukan" aria-label="お客さん図鑑">' + LEVELS.map(function (L, i) {
+    var s = stars(i); return '<i class="' + (s === 3 ? "s3" : s ? "s" : "") + '" title="' + (s ? (i + 1) + "人目 ★" + s : "まだ") + '">' + (s ? L.face : "？") + "</i>";
+  }).join("") + "</div>";
 }
 // きょうのわがままの星の分布（★3・★2・★1が何日ずつか）
 function distHtml() {

@@ -23,6 +23,7 @@ node qa/run.mjs   # 全問の答えが1つ・要らない条件が無い・ヒ�
 - 毎日1問（`makeDaily`）は日本時間の日付から決まった乱数で作る。どの端末でも同じ問題になるよう `Math.random` は使わない。シェアの文には具材の名前（答え）を入れない（QA が見る）。
 - 時間制限は付けない。文字は少なめ・一画面一人。お笑いは台詞と反応で。ほかの作品の名前・キャラ・見た目は使わない。
 - 外へ通信しない。外のスクリプト・フォント・広告・解析を入れない（CSP の `connect-src 'self'` を広げない）。記録は遊ぶ人のブラウザ（localStorage）だけ。
+- 感想の受け口は `.github/ISSUE_TEMPLATE/feedback.yml`（shared-workflows `template/` の写し）と、そこへのただのリンク「💬 感想を送る」だけ。ゲームから何も送らない。名前・メールを聞く項目を足さない。
 - 応援は Ko-fi（https://ko-fi.com/satouaaaaa）へのただのリンクだけ。遊ぶのは無料のまま、有料版は置かない（GitHub Pages は売り買いが主目的のサイトに使えない）。
 - 機能を足す・直すたびに `qa/run.mjs` に検査を足す。乱数で動く部分は1回でなく何百回も試す。
 - PWA（`manifest.webmanifest`・`sw.js`・`icon-*.png`）：画面のファイルを足したら `sw.js` の `SHELL` にも足し、中身を大きく変えたら `CACHE` の版を上げる。アイコンは `node tools/make-icons.cjs` で作り直せる。

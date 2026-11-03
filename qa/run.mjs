@@ -101,6 +101,9 @@ try {
   check("外のサイトのスクリプトを読まない", await page.evaluate(() => [...document.scripts].every((s) => !s.src || new URL(s.src).protocol === "file:")));
   const kofi = await page.evaluate(() => [...document.links].find((a) => a.href.includes("ko-fi"))?.href);
   check("応援のリンクが Ko-fi のページを指す（ボタン用スクリプトは入れない）", kofi === "https://ko-fi.com/satouaaaaa", kofi || "無い");
+  // 感想の受け口：タイトル・遊び方・終わりの画面に、Issue フォームへのただのリンク（ゲームからは何も送らない。shared-workflows routines/game-feedback.md）
+  const fbs = await page.evaluate(() => [...document.querySelectorAll("a.fb")].map((a) => [a.href, a.target, a.rel, a.closest("#after,.guide,.foot")?.className]));
+  check("感想を送るリンクが、タイトル・遊び方・終わりの画面にあり、Issue フォーム「感想」を新しいタブで開く", fbs.length === 3 && fbs.every(([h, t, r]) => h === "https://github.com/satou-aaaaa/wagamama-burger/issues/new?template=feedback.yml" && t === "_blank" && /noopener/.test(r)) && ["after", "guide", "foot"].every((c) => fbs.some((f) => f[3] === c)), JSON.stringify(fbs));
 
   // 3. 正しい順に積むと星3つ・次が開く
   await page.click('.lvbtn[data-i="0"]');
@@ -276,6 +279,9 @@ try {
   await pq.evaluate(() => { const r = JSON.parse(localStorage.getItem("wagamamaBurger1")); r.best = Array(10).fill(3); localStorage.setItem("wagamamaBurger1", JSON.stringify(r)); });
   await pq.reload();
   check("1章を全員★3にすると、章と記録帳に王冠が付く", /👑/.test(await pq.textContent(".chap h2")) && /1章👑/.test(await pq.textContent("#logBody")));
+  // お客さん図鑑：満足させた人の顔が出て、まだの人は ？。数は解いた人数と同じ
+  const zk = await pq.evaluate(() => { const els = [...document.querySelectorAll("#logBody .zukan i")]; return { n: els.length, shown: els.filter((e) => e.textContent !== "？").length, cleared: JSON.parse(localStorage.getItem("wagamamaBurger1")).best.filter((b) => b > 0).length, title: document.querySelector("#logBody .zt").textContent }; });
+  check("記録帳のお客さん図鑑に全員の枠があり、満足させた人だけ顔が出る", zk.n === 40 && zk.shown >= 10 && zk.shown === zk.cleared && zk.title.includes(zk.cleared + "/40"), JSON.stringify(zk));
   // 改善 2026-11-03：次の問題までの時間・星の分布・キーボード・おかわりの先作り
   check("次のきょうのわがまままでの時間：日本時間0時の1分前は「0時間1分」、0時ちょうどは「24時間0分」", await pq.evaluate(() => __game.untilNext(Date.UTC(2026, 10, 3, 14, 59)) === "0時間1分" && __game.untilNext(Date.UTC(2026, 10, 3, 15, 0)) === "24時間0分"));
   await pq.evaluate(() => { __game.setToday(30); __game.showTitle(); });
