@@ -53,14 +53,30 @@ h1{font-size:20px;margin:0}
 .log{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:0 12px;margin:12px 0}
 .log summary{cursor:pointer;min-height:48px;display:flex;align-items:center}
 .log dl{margin:0 0 10px;display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:14px}.log dt{color:var(--sub)}.log dd{margin:0;font-weight:700}
-.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:4px 0 12px}
-.cal i{height:26px;border-radius:6px;background:var(--bg);border:1px solid var(--line);font-style:normal;font-size:10px;display:flex;align-items:center;justify-content:center;color:var(--sub)}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin:4px -10px 12px}
+.cal i,.cal button.mc{height:48px;border-radius:8px;background:var(--bg);border:1px solid var(--line);font-style:normal;font-size:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--sub);padding:0;line-height:1.1;min-width:0}
+.cal [data-n]::before{content:attr(data-n);font-size:9px;opacity:.75}
+.cal i.off{visibility:hidden}.cal i.fut{opacity:.45}.cal b.wd{font-size:11px;color:var(--sub);text-align:center;font-weight:400}
+.cal button.mc{font:inherit;font-size:13px;border:1.5px dashed var(--acc);color:var(--acc);font-weight:700;cursor:pointer;width:100%}
+.calhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:6px 0 2px}.calhead b{font-size:15px}
+.calhead button{font:inherit;min-width:48px;min-height:48px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;font-size:16px}.calhead button:disabled{opacity:.3;cursor:default}
+.calsum{font-size:12px;color:var(--sub);margin:0 0 4px;min-height:1.2em}
 .after a.fb,.guide a.fb{display:inline-flex;align-items:center;min-height:48px;padding:0 12px;color:var(--sub);font-size:14px}
 .kofi{font-size:13px;color:var(--sub);line-height:1.8;margin:12px 4px;text-align:center}.kofi a{color:var(--acc);font-weight:700;padding:14px 2px}
 .badges{list-style:none;padding:0;margin:0 0 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .badges li{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:6px 8px;display:grid;grid-template-columns:auto 1fr;column-gap:6px;align-items:center;opacity:.6}
 .badges li.on{opacity:1;border-color:var(--star)}
-.badges span{grid-row:span 2;font-size:22px}.badges b{font-size:12px}.badges small{font-size:10px;color:var(--sub)}
+.badges span[aria-hidden]:first-child{grid-row:span 3;font-size:22px}.badges b{font-size:12px}.badges small{font-size:10px;color:var(--sub)}
+.badges .pg{grid-column:2;display:block;height:5px;border-radius:3px;background:var(--line);margin-top:3px;overflow:hidden}.badges .pg i{display:block;height:100%;background:var(--star)}
+.badges li.on .pg{display:none}
+.homenav{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:10px 0 0}
+.homenav button{font:inherit;font-size:15px;font-weight:700;min-height:52px;border-radius:14px;border:2px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.homenav small{display:block;font-size:11px;font-weight:400;color:var(--sub)}
+.achsum{font-size:13px;color:var(--sub);margin:8px 0 10px}
+.gotach{text-align:center;font-size:13px;margin:8px 0 0;color:var(--ink)}
+.tnote{text-align:center;font-size:13px;color:var(--acc);min-height:0;margin:6px 0 0}
+ul.conds li.focus{outline:2px dashed var(--acc);outline-offset:1px;background:var(--card)}
+ul.conds li.focus::before{content:"👀";flex:none}
 .goal{text-align:center;font-size:13px;color:var(--sub);margin:4px 0 0}
 .zt{display:block;font-size:13px;margin:4px 0}
 .zukan{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin:0 0 12px}
@@ -153,6 +169,8 @@ button.b:disabled{opacity:.35;cursor:default}
 .left{font-size:13px;font-weight:400;opacity:.9}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.confetti{display:none}}
+/* all:unset などで枠が消えないよう、キーで選んだ所の枠はいちばん最後に強く書く */
+:is(.icon,button,a,summary):focus-visible{outline:2px solid var(--acc)!important;outline-offset:2px}
 </style></head><body><main>
 
 <section id="title">
@@ -165,13 +183,21 @@ button.b:disabled{opacity:.35;cursor:default}
   <button class="daily" id="dailyBtn"><span class="em" id="dailyFace">🍔</span><span><b>きょうのわがまま</b><small id="dailySub">毎日1問、みんな同じ注文</small></span><span class="go">▶</span></button>
   <button class="daily weekly" id="weeklyBtn"><span class="em" id="weeklyFace">🦁</span><span><b>今週の特大わがまま</b><small id="weeklySub">具8枚・週に1問</small></span><span class="go">▶</span></button>
   <div class="streak" id="streak"></div>
+  <p class="tnote" id="tnote" role="status" aria-live="polite"></p>
   <div class="goal" id="goal"></div>
   <div class="row2"><button class="b" id="cont">つづきから</button><button class="b sec" id="share1">記録をシェア</button></div>
+  <div class="homenav"><button type="button" id="achBtn">🏅 実績<small id="achSub"></small></button><button type="button" id="calBtn">📅 カレンダー<small id="calSub">遊んだ日</small></button></div>
   <button class="b sec" id="install" hidden>📲 ホーム画面に追加（電波なしでも遊べる）</button>
   <div class="extra"><h2>🍟 おかわり</h2><div class="new">練習問題がいくらでも出ます。ノーミス（★3）を何問つづけられるか</div><div class="row3" id="extras"></div></div>
   <div id="chapters"></div>
   <details class="log" id="log"><summary>📒 記録帳</summary><div id="logBody"></div></details>
   <div class="foot">時間制限なし・広告なし・記録はこの端末の中だけ<br><a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">☕ 作者を応援する（Ko-fi）</a><br><a class="fb" href="https://github.com/satou-aaaaa/wagamama-burger/issues/new?template=feedback.yml" target="_blank" rel="noopener">💬 感想を送る</a></div>
+</section>
+
+<section id="ach" hidden>
+  <header><button class="icon" id="achBack" aria-label="もどる">◀</button><h1>🏅 実績</h1><span style="width:48px"></span></header>
+  <p class="achsum" id="achSum"></p>
+  <div id="achBody"></div>
 </section>
 
 <section id="play" hidden>
@@ -184,6 +210,7 @@ button.b:disabled{opacity:.35;cursor:default}
   <div class="dock" id="dock"><div class="tray" id="tray"></div>
   <button class="b" id="go" disabled>できあがり！</button></div>
   <div class="after" id="after" hidden><button class="b sec" id="shareQ">🤝 出題する</button><button class="b sec" id="shareR">📣 結果をシェア</button><a class="fb" href="https://github.com/satou-aaaaa/wagamama-burger/issues/new?template=feedback.yml" target="_blank" rel="noopener">💬 感想を送る</a></div>
+  <p class="gotach" id="gotAch" hidden></p>
   <p class="kofi" id="kofi" hidden>楽しめたら、<a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi でコーヒー1杯の応援</a>をもらえると、新しいお客さんづくりの励みになります（任意・遊ぶのはずっと無料）。</p>
   <div class="sub" id="sub"><button id="undo">ひとつ戻す</button><button id="retry">やり直す</button><button id="hint">ヒント</button></div>
 </section>
@@ -301,7 +328,7 @@ setInterval(function () {
 }, 30000);
 function showTitle() {
   shownDay = today();
-  $("play").hidden = true; $("title").hidden = false; $("banner").hidden = true;
+  $("play").hidden = true; $("ach").hidden = true; $("title").hidden = false; $("banner").hidden = true; $("tnote").textContent = "";
   var d = makeDaily(today());
   $("dailyFace").textContent = d.face;
   $("dailySub").textContent = dailyDone() ? "#" + (today() + 1) + " クリア済み ★" + rec.log[today()] + "・次まで " + untilNext() : "#" + (today() + 1) + "・毎日1問、みんな同じ注文";
@@ -312,7 +339,11 @@ function showTitle() {
   var g = BADGES.filter(function (b) { return rec.badges.indexOf(b[0]) < 0; })[0];
   $("goal").textContent = g ? "🎯 次の目標：" + g[3] : "🏅 実績を全部集めました";
   var n = streakNow();
-  $("streak").textContent = n ? "🔥 " + n + "日連続（最高 " + rec.streak.max + "日）" : rec.streak.max ? "連続がとぎれました。きょうから、また" : "";
+  // 連続は1日以上のときだけ出す。休んだ日を責める言葉は出さない
+  $("streak").textContent = n ? "🔥 " + n + "日連続（最高 " + rec.streak.max + "日）" : "";
+  $("achSub").textContent = rec.badges.length + " / " + BADGES.length;
+  $("calSub").textContent = "遊んだ日 " + playedDays() + "日";
+  achRender();
   $("cont").textContent = clearedCount() ? "つづきから（" + (nextLevel() + 1) + "人目）" : "はじめから";
   var h = "";
   CHAPTERS.forEach(function (c, ci) {
@@ -337,18 +368,42 @@ function showLog() {
   if (newBadges().length) save(); // 前の版で遊んだ記録からも、取れている実績を付ける
   var three = rec.best.filter(function (b) { return b === 3; }).length, days = Object.keys(rec.log).length;
   var crowns = CHAPTERS.map(function (c, ci) { return (ci + 1) + "章" + (chapterStars(ci) === PER * 3 ? "👑" : "・" + chapterStars(ci) + "/" + PER * 3); }).join("　");
-  var cal = "", t = today();
-  for (var d = t - 27; d <= t; d++) {
-    var v = rec.log[d] || 0, pv = rec.past[d] || 0;
-    if (d >= 0 && d < t && !v && pv) cal += '<i class="p' + pv + '" title="#' + (d + 1) + '（あとから）">↺★' + pv + "</i>";
-    else cal += '<i class="' + (v ? "s" + v : "") + (d === t ? " today" : "") + '" title="#' + (d + 1) + '">' + (d >= 0 ? (v ? "★" + v : "") : "") + "</i>";
-  }
+  var cal = calHtml();
   $("logBody").innerHTML = "<dl><dt>お客さん</dt><dd>" + clearedCount() + "/" + LEVELS.length + "人・★" + total() + "/" + LEVELS.length * 3 + "（★3は" + three + "人）</dd>" +
     "<dt>章</dt><dd>" + crowns + "</dd><dt>きょうの</dt><dd>解いた日 " + days + "日・最高 " + (rec.streak.max || 0) + "日連続</dd>" +
     EXTRA.map(function (e, l) { var x = ex(l); return "<dt>" + e.name + "</dt><dd>" + x.n + "問・★3 " + (x.perfect || 0) + "問・ノーミス最高 " + x.best + "</dd>"; }).join("") +
-    "</dl>" + distHtml() + '<div class="cal" aria-label="きょうのわがまま 直近4週">' + cal + "</div>" +
-    missHtml() + zukanHtml() + badgeHtml();
-  $("logBody").querySelectorAll(".misses .miss").forEach(function (b) { b.onclick = function () { startPast(+b.dataset.d); }; });
+    "</dl>" + distHtml() + cal +
+    missHtml() + zukanHtml() + '<button type="button" class="b sec" id="achBtn2">🏅 実績を見る（' + rec.badges.length + "/" + BADGES.length + "）</button><div style=\"height:10px\"></div>";
+  $("logBody").querySelectorAll(".misses .miss,.cal button.mc").forEach(function (b) { b.onclick = function () { startPast(+b.dataset.d); }; });
+  $("calPrev").onclick = function () { calOff--; showLog(); };
+  $("calNext").onclick = function () { calOff++; showLog(); };
+  $("achBtn2").onclick = showAch;
+}
+// 遊んだ日のカレンダー（ひと月ずつ。calOff = 0 が今月、-1 が先月）。きょうのわがままは ★の数で色を濃く、あとから解いた日は ↺、
+// 取りこぼした日（あとから遊べる日）は押せるます。日の番号 0 = 2026-11-03 なので、それより前の月へは戻れない
+var calOff = 0, DAY0 = Date.UTC(2026, 10, 3);
+function dateOf(d) { return new Date(DAY0 + d * 86400000); }
+function calHtml() {
+  var t = today(), now = dateOf(t), y = now.getUTCFullYear(), m = now.getUTCMonth() + calOff;
+  var first = new Date(Date.UTC(y, m, 1)), y2 = first.getUTCFullYear(), m2 = first.getUTCMonth();
+  if (y2 < 2026 || (y2 === 2026 && m2 < 10)) { calOff++; return calHtml(); }
+  var d0 = Math.round((first.getTime() - DAY0) / 86400000), len = new Date(Date.UTC(y2, m2 + 1, 0)).getUTCDate();
+  var missed = missedDays(), solved = 0, late = 0;
+  var h = '<div class="calhead"><button type="button" id="calPrev" aria-label="前の月"' + (y2 === 2026 && m2 === 10 ? " disabled" : "") + '>◀</button><b id="calTitle">' + y2 + "年" + (m2 + 1) + '月</b><button type="button" id="calNext" aria-label="次の月"' + (calOff >= 0 ? " disabled" : "") + ">▶</button></div>";
+  var c = "日月火水木金土".split("").map(function (w) { return '<b class="wd">' + w + "</b>"; }).join("");
+  for (var k = 0; k < first.getUTCDay(); k++) c += '<i class="off"></i>';
+  for (var i = 0; i < len; i++) {
+    var d = d0 + i, v = rec.log[d] || 0, pv = rec.past[d] || 0, n = ' data-n="' + (i + 1) + '"';
+    if (v) solved++; else if (pv) late++;
+    if (d < 0) c += '<i class="fut"' + n + "></i>";
+    else if (v) c += '<i class="s' + v + (d === t ? " today" : "") + '" title="#' + (d + 1) + '"' + n + ">★" + v + "</i>";
+    else if (d < t && pv) c += '<i class="p' + pv + '" title="#' + (d + 1) + '（あとから）"' + n + ">↺★" + pv + "</i>";
+    else if (missed.indexOf(d) >= 0) c += '<button type="button" class="mc" data-d="' + d + '" title="#' + (d + 1) + '" aria-label="#' + (d + 1) + ' をあとから遊ぶ"' + n + ">↺</button>";
+    else c += '<i class="' + (d === t ? "today" : d > t ? "fut" : "") + '" title="#' + (d + 1) + '"' + n + "></i>";
+  }
+  var st = streakNow();
+  return h + '<p class="calsum" id="calSum">この月 ★' + solved + "日" + (late ? "・↺" + late + "日" : "") + (st ? "・🔥 " + st + "日連続" : "") + "</p>" +
+    '<div class="cal" aria-label="きょうのわがまま ' + y2 + "年" + (m2 + 1) + '月">' + c + "</div>";
 }
 // 取りこぼした日（直近4週）を新しい順に7日まで、押すとあとから遊べるボタンにする。連続日数には入らない
 function missHtml() {
@@ -358,38 +413,53 @@ function missHtml() {
 function missedDays() { var t = today(), a = []; for (var d = Math.max(0, t - 27); d < t; d++) if (!rec.log[d] && !rec.past[d]) a.push(d); return a; }
 // 実績：記録から決まる目標。取ったものは badges に覚え、初めて取ったときだけ知らせる。まだのものは条件だけ見せる（次の目標になるように）
 function exSum(f) { return rec.extra.reduce(function (a, x) { return a + (x ? f(x) : 0); }, 0); }
-function chapterDone(ci) { for (var i = ci * PER; i < (ci + 1) * PER; i++) if (!stars(i)) return false; return true; }
+// 遊んだ日：きょうのわがままを解いた日と、あとから解いた日を合わせた数（連続でなく合計）
+function playedDays() { var o = {}; [rec.log, rec.past].forEach(function (m) { Object.keys(m).forEach(function (d) { if (m[d] > 0) o[d] = 1; }); }); return Object.keys(o).length; }
+function chapterCleared(ci) { var n = 0; for (var i = ci * PER; i < (ci + 1) * PER; i++) if (stars(i)) n++; return n; }
+function exMax(f) { return rec.extra.reduce(function (a, x) { return Math.max(a, x ? f(x) || 0 : 0); }, 0); }
+// [id, 絵, 名前, 条件, 進み具合（[いま, 目標]）]。腕前・集める・続けるを混ぜる。続けるは連続でなく合計の日数を主にする
 var BADGES = [
-  ["first", "🍔", "はじめての一品", "お客さんを1人満足させる", function () { return clearedCount() >= 1; }],
-  ["ch1", "🥉", "1章のお客さん全員", "1章を全員クリア", function () { return chapterDone(0); }],
-  ["ch2", "🥈", "2章のお客さん全員", "2章を全員クリア", function () { return chapterDone(1); }],
-  ["ch3", "🥇", "3章のお客さん全員", "3章を全員クリア", function () { return chapterDone(2); }],
-  ["ch4", "🏆", "達人のお客さん全員", "4章を全員クリア", function () { return chapterDone(3); }],
-  ["crown", "👑", "王冠", "どれか1章を全員★3", function () { return CHAPTERS.some(function (c, ci) { return chapterStars(ci) === PER * 3; }); }],
-  ["all3", "💎", "全員★3", "40人全員を★3", function () { return rec.best.filter(function (b) { return b === 3; }).length >= LEVELS.length; }],
-  ["d3", "🔥", "3日連続", "きょうのわがままを3日連続", function () { return (rec.streak.max || 0) >= 3; }],
-  ["d7", "📅", "1週間連続", "きょうのわがままを7日連続", function () { return (rec.streak.max || 0) >= 7; }],
-  ["d30", "🌙", "30日連続", "きょうのわがままを30日連続", function () { return (rec.streak.max || 0) >= 30; }],
-  ["days50", "🗓️", "常連さん", "きょうのわがままを50日解く", function () { return Object.keys(rec.log).length >= 50; }],
-  ["big1", "🍔", "特大の一品", "今週の特大わがままを解く", function () { return Object.keys(rec.wlog).length >= 1; }],
-  ["big4", "🏅", "特大の常連", "特大わがままを4週解く", function () { return Object.keys(rec.wlog).length >= 4; }],
-  ["x10", "🍟", "おかわり10問", "おかわりを合わせて10問", function () { return exSum(function (x) { return x.n || 0; }) >= 10; }],
-  ["x100", "🥤", "おかわり100問", "おかわりを合わせて100問", function () { return exSum(function (x) { return x.n || 0; }) >= 100; }],
-  ["run5", "✨", "ノーミス5連続", "おかわりで★3を5問続ける", function () { return rec.extra.some(function (x) { return x && x.best >= 5; }); }],
-  ["run10", "🌟", "ノーミス10連続", "おかわりで★3を10問続ける", function () { return rec.extra.some(function (x) { return x && x.best >= 10; }); }],
-  ["master10", "🧠", "達人のおかわり", "おかわり・達人を10問", function () { return !!(rec.extra[2] && rec.extra[2].n >= 10); }]
+  ["first", "🍔", "はじめての一品", "お客さんを1人満足させる", function () { return [clearedCount(), 1]; }],
+  ["ch1", "🥉", "1章のお客さん全員", "1章を全員クリア", function () { return [chapterCleared(0), PER]; }],
+  ["ch2", "🥈", "2章のお客さん全員", "2章を全員クリア", function () { return [chapterCleared(1), PER]; }],
+  ["ch3", "🥇", "3章のお客さん全員", "3章を全員クリア", function () { return [chapterCleared(2), PER]; }],
+  ["ch4", "🏆", "達人のお客さん全員", "4章を全員クリア", function () { return [chapterCleared(3), PER]; }],
+  ["crown", "👑", "王冠", "どれか1章を全員★3", function () { return [Math.max.apply(null, CHAPTERS.map(function (c, ci) { return chapterStars(ci); })), PER * 3]; }],
+  ["all3", "💎", "全員★3", "40人全員を★3", function () { return [rec.best.filter(function (b) { return b === 3; }).length, LEVELS.length]; }],
+  ["d3", "🔥", "3日連続", "きょうのわがままを3日連続", function () { return [rec.streak.max || 0, 3]; }],
+  ["d7", "📅", "1週間分", "きょうのわがままを合わせて7日", function () { return [playedDays(), 7]; }],
+  ["d30", "🌙", "ひと月分", "きょうのわがままを合わせて30日", function () { return [playedDays(), 30]; }],
+  ["days50", "🗓️", "常連さん", "きょうのわがままを合わせて50日", function () { return [playedDays(), 50]; }],
+  ["big1", "🍔", "特大の一品", "今週の特大わがままを解く", function () { return [Object.keys(rec.wlog).length, 1]; }],
+  ["big4", "🏅", "特大の常連", "特大わがままを4週解く", function () { return [Object.keys(rec.wlog).length, 4]; }],
+  ["x10", "🍟", "おかわり10問", "おかわりを合わせて10問", function () { return [exSum(function (x) { return x.n || 0; }), 10]; }],
+  ["x100", "🥤", "おかわり100問", "おかわりを合わせて100問", function () { return [exSum(function (x) { return x.n || 0; }), 100]; }],
+  ["run5", "✨", "ノーミス5連続", "おかわりで★3を5問続ける", function () { return [exMax(function (x) { return x.best; }), 5]; }],
+  ["run10", "🌟", "ノーミス10連続", "おかわりで★3を10問続ける", function () { return [exMax(function (x) { return x.best; }), 10]; }],
+  ["master10", "🧠", "達人のおかわり", "おかわり・達人を10問", function () { return [rec.extra[2] && rec.extra[2].n || 0, 10]; }]
 ];
+function badgeProg(b) { var p = b[4](); return [Math.min(p[0], p[1]), p[1]]; }
 // 新しく取った実績を覚えて返す（知らせる用）
 function newBadges() {
   var got = [];
-  BADGES.forEach(function (b) { if (rec.badges.indexOf(b[0]) < 0 && b[4]()) { rec.badges.push(b[0]); got.push(b); } });
+  BADGES.forEach(function (b) { var p = badgeProg(b); if (rec.badges.indexOf(b[0]) < 0 && p[0] >= p[1]) { rec.badges.push(b[0]); got.push(b); } });
   return got;
 }
+// 実績の一覧。まだのものは条件と「いま/目標」の進み具合を出す
 function badgeHtml() {
   return '<b class="zt">実績 ' + rec.badges.length + "/" + BADGES.length + '</b><ul class="badges" aria-label="実績">' + BADGES.map(function (b) {
-    var on = rec.badges.indexOf(b[0]) >= 0;
-    return '<li class="' + (on ? "on" : "") + '"><span aria-hidden="true">' + (on ? b[1] : "🔒") + "</span><b>" + (on ? b[2] : "？？？") + "</b><small>" + b[3] + "</small></li>";
+    var on = rec.badges.indexOf(b[0]) >= 0, p = badgeProg(b);
+    return '<li class="' + (on ? "on" : "") + '"><span aria-hidden="true">' + (on ? b[1] : "🔒") + "</span><b>" + (on ? b[2] : "？？？") + "</b><small>" + b[3] + (on ? "" : "・" + p[0] + "/" + p[1]) + "</small>" +
+      '<span class="pg" aria-hidden="true"><i style="width:' + Math.round(p[0] / p[1] * 100) + '%"></i></span></li>';
   }).join("") + "</ul>";
+}
+function achRender() {
+  $("achSum").textContent = "取った実績 " + rec.badges.length + " / " + BADGES.length + "。腕前・集める・続けるの3種類";
+  $("achBody").innerHTML = badgeHtml();
+}
+function showAch() {
+  if (newBadges().length) save();
+  $("title").hidden = true; $("play").hidden = true; $("ach").hidden = false; achRender(); scrollTo(0, 0);
 }
 // お客さん図鑑：満足させたお客さんの顔が並ぶ（まだの人は ？）。★3 の人は金色の枠
 function zukanHtml() {
@@ -408,6 +478,8 @@ function distHtml() {
 // --- 遊ぶ画面 ---
 var kofiShow = false, dailyShare = null, weeklyShare = null; // Ko-fi のひとことは、章を初めてクリアした結果の画面でだけ出す（shared の kofi/app-guide.md）
 var cur = null, lv = 0, mode = "level", stack = [], left = [], done = false, judged = null, hintAt = null, hintIng = null, usedHint = false, tries = 0, drawn = 0, lastStars = 0;
+// ヒントの段：0 = まだ、1 = 考えどころの条件を光らせた（★2まで）、2 = 次の具を教えた（★1）。hintCond = 光らせている条件の番号。lastGot = いま取った実績
+var hintLv = 0, hintCond = -1, lastGot = [];
 function chapterOf(i) { return Math.floor(i / PER); }
 function isNewCond(c) {
   // その章で初めて出る種類に NEW を付ける（各章の最初の2人だけ）
@@ -434,8 +506,8 @@ function sizeStage() {
 }
 function begin(p) {
   dailyShare = weeklyShare = null;
-  cur = p; stack = []; left = p.items.slice(); done = false; judged = null; hintAt = hintIng = null; usedHint = false; tries = 0; drawn = 0;
-  $("title").hidden = true; $("play").hidden = false; $("after").hidden = true;
+  cur = p; stack = []; left = p.items.slice(); done = false; judged = null; hintAt = hintIng = null; usedHint = false; tries = 0; drawn = 0; hintLv = 0; hintCond = -1; lastGot = [];
+  $("title").hidden = true; $("ach").hidden = true; $("play").hidden = false; $("after").hidden = true;
   $("stage").querySelectorAll(".stars,.confetti").forEach(function (e) { e.remove(); });
   $("guide").hidden = rec.guided;
   fitStage(p.items);
@@ -453,7 +525,12 @@ function startDaily() {
 }
 // 取りこぼした日をあとから解く（記録は past に。カレンダー log と連続日数は変えない）
 var pastDay = 0;
-function startPast(d) { mode = "past"; pastDay = d; begin(makeDaily(d)); $("banner").hidden = true; }
+// 始める前に記録を読み直し、別のタブでもう解いてあった日は遊ばずにタイトルへ戻る（古いタブで二重に解かない）
+function startPast(d) {
+  try { mergeRec(rec, JSON.parse(localStorage.getItem(KEY) || "null")); } catch (e) {}
+  if (rec.log[d] > 0 || rec.past[d] > 0 || d >= today() || d < 0) { showTitle(); $("tnote").textContent = "#" + (d + 1) + " はもう解いてあります"; return; }
+  mode = "past"; pastDay = d; begin(makeDaily(d)); $("banner").hidden = true;
+}
 var exLv = 0, exCache = {};
 // おかわりは作るのに少し時間がかかる（達人で最大0.2秒ほど）ので、次の問題を手のあいたときに先に作っておく
 function extraOf(l, k) { var key = l + ":" + k; if (!exCache[key]) exCache[key] = makeExtra(l, k); return exCache[key]; }
@@ -475,7 +552,7 @@ function startExtra(l) {
 function layer(t, cls) { var d = document.createElement("button"); d.type = "button"; d.className = "ly t-" + t + (cls ? " " + cls : ""); return d; }
 function render(full) {
   var L = cur;
-  $("face").textContent = L.face; $("say").textContent = "「" + L.say + "」";
+  $("face").textContent = L.face; $("say").textContent = "「" + (done ? WIN[winIx() % WIN.length] : L.say) + "」";
   if (mode === "daily") { $("lv").textContent = "きょうのわがまま"; $("dots").innerHTML = ""; }
   else if (mode === "weekly") { $("lv").textContent = "今週の特大わがまま"; $("dots").innerHTML = ""; }
   else if (mode === "past") { $("lv").textContent = "#" + (pastDay + 1) + " のわがまま（あとから）"; $("dots").innerHTML = ""; }
@@ -487,7 +564,7 @@ function render(full) {
   }
   $("conds").innerHTML = L.conds.map(function (c, k) {
     var st = judged ? (judged[k] ? "ok" : "ng") : "";
-    return '<li class="' + st + (isNewCond(c) ? " newc" : "") + '"><b aria-label="' + (st === "ok" ? "守れた" : st === "ng" ? "守れていない" : "") + '">' + (st === "ok" ? "✓" : st === "ng" ? "✗" : "・") + "</b><span>" + condHtml(c) + "</span></li>";
+    return '<li class="' + st + (isNewCond(c) ? " newc" : "") + (hintCond === k && !done ? " focus" : "") + '"><b aria-label="' + (st === "ok" ? "守れた" : st === "ng" ? "守れていない" : "") + '">' + (st === "ok" ? "✓" : st === "ng" ? "✗" : "・") + "</b><span>" + condHtml(c) + "</span></li>";
   }).join("");
   var sg = $("stage"); sg.querySelectorAll(".ly").forEach(function (e) { e.remove(); });
   var b = layer("bun-b"); b.style.animation = "none"; b.tabIndex = -1; b.setAttribute("aria-label", "下のパン"); sg.appendChild(b);
@@ -513,6 +590,9 @@ function render(full) {
   g.innerHTML = done ? (mode === "daily" || mode === "weekly" || mode === "past" ? "タイトルへ" : mode === "extra" ? "次のおかわり ▶" : lv < LEVELS.length - 1 ? "次のお客さん ▶" : "全員クリア！タイトルへ")
     : left.length ? 'できあがり！ <span class="left">（あと' + left.length + "個）</span>" : "できあがり！";
   $("undo").disabled = !stack.length || done; $("hint").disabled = done; $("retry").disabled = !stack.length;
+  $("hint").textContent = hintLv ? "ヒント（次の具）" : "ヒント";
+  $("gotAch").hidden = !(done && lastGot.length);
+  if (done && lastGot.length) $("gotAch").textContent = "🏅 実績：" + lastGot.map(function (b) { return b[1] + b[2]; }).join("・");
   $("after").hidden = !done; $("shareQ").hidden = mode !== "level"; $("shareR").hidden = mode === "past"; $("sub").hidden = done;
   if (!done) kofiShow = false;
   $("kofi").hidden = !(done && kofiShow);
@@ -560,7 +640,7 @@ function finish() {
   var r = check(stack, cur.conds); tries++; judged = r;
   if (r.every(Boolean)) {
     done = true;
-    var n = usedHint ? 1 : tries === 1 ? 3 : 2; lastStars = n;
+    var n = hintLv >= 2 ? 1 : hintLv === 1 || tries > 1 ? 2 : 3; lastStars = n;
     var first;
     if (mode === "daily") { first = !dailyDone(cur.daily); recordDaily(n, cur.daily); }
     else if (mode === "weekly") { first = !weeklyDone(cur.weekly); if (first) rec.wlog[cur.weekly] = n; weeklyShare = { week: cur.weekly, stars: n, tries: tries, hint: usedHint }; }
@@ -568,7 +648,7 @@ function finish() {
     else if (mode === "past") { first = !rec.past[pastDay]; rec.past[pastDay] = Math.max(rec.past[pastDay] || 0, n); }
     else { first = !stars(lv); rec.best[lv] = Math.max(stars(lv), n); }
     kofiShow = mode === "level" && first && (lv + 1) % PER === 0;
-    var got = newBadges(); save();
+    var got = newBadges(); save(); lastGot = got;
     if (got.length) setTimeout(function () { toast("🏅 実績：" + got.map(function (b) { return b[1] + b[2]; }).join("・")); }, mode === "level" && first && (lv + 1) % PER === 0 ? 3800 : 1900);
     // 結果画面のシェアは、いま解いた日の記録で（別のタブが先にその日を解いていたら、その記録）
     if (mode === "daily") dailyShare = rec.daily && rec.daily.day === cur.daily ? rec.daily : { day: cur.daily, solved: true, stars: rec.log[cur.daily] || n, tries: tries, hint: usedHint };
@@ -580,7 +660,7 @@ function finish() {
     st.innerHTML = [0, 1, 2].map(function (k) { return '<span class="' + (k < n ? "" : "off") + '" style="animation-delay:' + (0.2 + k * 0.15) + 's">★</span>'; }).join("");
     $("stage").appendChild(st);
     $("face").style.transform = "scale(1.25)"; setTimeout(function () { $("face").style.transform = ""; }, 600);
-    toast(mode === "daily" && first ? "🔥 " + rec.streak.n + "日連続！" : mode === "extra" && ex(exLv).run >= 2 ? "ノーミス " + ex(exLv).run + "連続！" : WIN[(mode === "daily" ? today() : lv) % WIN.length]);
+    toast(mode === "daily" && first ? "🔥 " + rec.streak.n + "日連続！" : mode === "extra" && ex(exLv).run >= 2 ? "ノーミス " + ex(exLv).run + "連続！" : n === 3 ? "★3 ノーミス！" : "できあがり！");
     if (mode === "level" && first && (lv + 1) % PER === 0) setTimeout(function () { toast((chapterOf(lv) + 1) + "章クリア！"); }, 1900);
     return;
   }
@@ -588,12 +668,30 @@ function finish() {
   $("face").style.transform = "rotate(-12deg)"; setTimeout(function () { $("face").style.transform = ""; }, 600);
   toast(LOSE[Math.floor(Math.random() * LOSE.length)]);
 }
+// お客さんのひとこと（できあがりの吹き出し）。問題ごとに決まる
+function winIx() { return mode === "daily" || mode === "past" ? cur.daily : mode === "weekly" ? cur.weekly : mode === "extra" ? cur.k + exLv : lv; }
+// ヒントは2段。1回目は答えを言わずに「考えどころ」の条件を光らせる（★2まで）。2回目からは今までどおり次の具・見直す所を教える（★1）
+// 考えどころ：いまの積み方のまま、もう守れない条件があればそれ。無ければ、残りの積み方をいちばん絞る条件
+function focusCond() {
+  var rest = perms(left).map(function (o) { return stack.concat(o); }), best = -1, bestN = Infinity, ok = 0;
+  var cnt = cur.conds.map(function (c) { return rest.filter(function (o) { return check(o, [c])[0]; }).length; });
+  rest.forEach(function (o) { if (check(o, cur.conds).every(Boolean)) ok++; });
+  if (!ok) { var broken = cnt.indexOf(0); return { k: broken, broken: true }; }
+  cnt.forEach(function (n, k) { if (n < rest.length && n < bestN) { bestN = n; best = k; } });
+  return { k: best, broken: false };
+}
 function hint() {
   if (done) return;
   var ans = cur.answer, i = 0; while (i < stack.length && stack[i] === ans[i]) i++;
   // 全部正しく積めているときはヒントを使ったことにしない（星が減らないように）
   if (i === ans.length) { toast("もう完成！「できあがり！」を押して"); return; }
   usedHint = true;
+  if (hintLv === 0) {
+    hintLv = 1; var f = focusCond(); hintCond = f.k; hintAt = hintIng = null; render();
+    toast(f.k < 0 ? "積んだ中に、見直す所があるよ" : f.broken ? "👀 この条件が、もう守れない" : "👀 まずはこの条件から");
+    return;
+  }
+  hintLv = 2; hintCond = -1;
   if (i < stack.length) { hintAt = i; hintIng = null; render(); toast("下から" + (i + 1) + "番目を見直して"); }
   else { hintAt = null; hintIng = ans[i]; render(); toast("次は" + ING[ans[i]]); }
 }
@@ -635,6 +733,7 @@ $("install").onclick = function () { if (!installEv) return; installEv.prompt();
 
 // キーボードでも遊べる：数字＝具材をのせる、Enter＝できあがり／次へ、Backspace・Z＝ひとつ戻す、H＝ヒント、Esc＝もどる
 document.addEventListener("keydown", function (e) {
+  if (!$("ach").hidden && e.key === "Escape") { showTitle(); return; }
   if ($("play").hidden || e.ctrlKey || e.metaKey || e.altKey) return;
   var k = e.key, a = document.activeElement;
   if (/^[1-9]$/.test(k)) { var b = $("tray").querySelectorAll(".ing")[+k - 1]; if (b) { b.click(); e.preventDefault(); } }
@@ -654,6 +753,9 @@ $("share1").onclick = function () { share("total", $("share1")); };
 $("shareQ").onclick = function () { share("challenge", $("shareQ")); };
 $("shareR").onclick = function () { share(mode === "level" ? "level" : mode, $("shareR")); };
 $("dailyBtn").onclick = startDaily;
+$("achBtn").onclick = showAch;
+$("achBack").onclick = showTitle;
+$("calBtn").onclick = function () { calOff = 0; $("log").open = true; showLog(); $("calTitle").scrollIntoView({ block: "start" }); };
 $("weeklyBtn").onclick = startWeekly;
 $("cont").onclick = function () { start(nextLevel()); };
 $("guideOk").onclick = function () { rec.guided = true; save(); $("guide").hidden = true; };
@@ -663,6 +765,6 @@ var q = +(new URLSearchParams(location.search).get("q") || 0);
 if (q >= 1 && q <= LEVELS.length && Math.floor(q) === q) start(q - 1, true); else showTitle();
 if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(function () {});
 // 検査（qa/run.mjs）用の窓口
-window.__game = { startPast: startPast, missedDays: missedDays, recordDaily: recordDaily, startWeekly: startWeekly, thisWeek: thisWeek, untilNext: untilNext, mergeRec: mergeRec, BADGES: BADGES, exCached: function (l, k) { return !!exCache[l + ":" + k]; }, start: start, startDaily: startDaily, startExtra: startExtra, rec: function () { return JSON.parse(JSON.stringify(rec)); }, add: add, finish: finish, showTitle: showTitle, shareText: shareText, flash: flash, setToday: function (d) { todayOverride = d; },
+window.__game = { startPast: startPast, showAch: showAch, playedDays: playedDays, calOff: function (n) { calOff = n; showLog(); }, focusCond: focusCond, hint: hint, get hintLv() { return hintLv; }, missedDays: missedDays, recordDaily: recordDaily, startWeekly: startWeekly, thisWeek: thisWeek, untilNext: untilNext, mergeRec: mergeRec, BADGES: BADGES, exCached: function (l, k) { return !!exCache[l + ":" + k]; }, start: start, startDaily: startDaily, startExtra: startExtra, rec: function () { return JSON.parse(JSON.stringify(rec)); }, add: add, finish: finish, showTitle: showTitle, shareText: shareText, flash: flash, setToday: function (d) { todayOverride = d; },
   get state() { return { lv: lv, mode: mode, stack: stack.slice(), left: left.slice(), done: done, judged: judged, stars: mode === "daily" ? (rec.log[today()] || 0) : mode === "past" ? (rec.past[pastDay] || 0) : mode === "weekly" ? (rec.wlog[thisWeek()] || 0) : mode === "extra" ? (done ? lastStars : 0) : stars(lv), streak: streakNow(), cur: cur }; } };
 </script></body></html>
