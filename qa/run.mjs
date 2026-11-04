@@ -190,6 +190,8 @@ try {
     for (const t of w.slice(0, 2)) await page.click(`.ing[data-t="${t}"]`);
     for (let k = 0; k < 20 && (await page.evaluate(() => __game.state.left.length)) > 0; k++) {
       await page.click("#hint");
+      // 1回目のヒントは条件を光らせるだけ（具は教えない）。具が光っていなければもう一度押す
+      if (!(await page.locator(".stage .ly.hint, .ing.hint").count())) await page.click("#hint");
       const bad = page.locator(".stage .ly.hint");
       if (await bad.count()) await bad.click(); else await page.click(".ing.hint");
     }
@@ -253,7 +255,8 @@ try {
   await pq.evaluate(() => { __game.setToday(11); __game.startDaily(); });
   check("同じ日にもう一度解いても連続は増えず、クリア済みと出る", (await pq.evaluate(() => __game.state.streak)) === 2 && await pq.locator("#banner").isVisible());
   await pq.evaluate(() => { __game.setToday(13); __game.showTitle(); });
-  check("1日あけると連続は0に戻り、タイトルにとぎれたと出る", (await pq.evaluate(() => __game.state.streak)) === 0 && /とぎれ/.test(await pq.textContent("#streak")));
+  // 休んだ日を責めない：連続が0のときは連続の言葉を出さない（2026-11-04 やりこみの決まり。前は「とぎれました」と出していた）
+  check("1日あけると連続は0に戻り、タイトルに連続の言葉を出さない（とぎれた・0日と書かない）", (await pq.evaluate(() => __game.state.streak)) === 0 && (await pq.textContent("#streak")).trim() === "");
   ds = await solveDaily(13);
   check("とぎれたあと解くと1日から数え直す", ds.streak === 1);
   await pq.reload();
@@ -480,6 +483,158 @@ try {
   check("毎日1問を450日続けると、連続日数が450日になる", longRun.n === 450 && longRun.max >= 450, JSON.stringify(longRun));
   await pq.close();
   check("出題リンク・記録・遊ぶ画面の確かめでページのエラーが無い", errors.length === 0, errors.join(" / "));
+  // 10. やりこみ（2026-11-04）：2段のヒント・できあがりのひとこと・実績の画面と進み具合・ひと月のカレンダー・あとから遊ぶ日
+  {
+    const pz = await browser.newPage({ viewport: { width: 320, height: 700 } });
+    const errZ = []; pz.on("pageerror", (e) => errZ.push(e.message));
+    await pz.goto(url); await pz.evaluate(() => { localStorage.clear(); localStorage.setItem("wagamamaBurger1", JSON.stringify({ best: [], guided: true })); }); await pz.reload();
+    const names = Object.values(ING);
+    // 10a. 1回目のヒントは条件を1つ光らせるだけで、具の名前を言わない。そのまま一発で解くと★2。2回目からは次の具を教え★1
+    const h1 = await pz.evaluate(async () => {
+      __game.start(12); __game.hint();
+      const out = { lv: __game.hintLv, focus: document.querySelectorAll("ul.conds li.focus").length, ingHint: document.querySelectorAll(".ing.hint,.stage .ly.hint").length, toast: document.getElementById("toast").textContent, btn: document.getElementById("hint").textContent };
+      __game.state.cur.answer.forEach((t) => __game.add(t)); __game.finish(); out.stars = __game.state.stars; out.focusAfter = document.querySelectorAll("ul.conds li.focus").length;
+      return out;
+    });
+    check("ヒント1回目：条件を1つだけ光らせ、具は光らせず名前も言わない。ボタンは「次の具」に替わる。そのまま解くと★2", h1.lv === 1 && h1.focus === 1 && h1.ingHint === 0 && !names.some((n) => h1.toast.includes(n)) && /次の具/.test(h1.btn) && h1.stars === 2 && h1.focusAfter === 0, JSON.stringify(h1));
+    const h2 = await pz.evaluate(() => { localStorage.clear(); __game.start(0); __game.hint(); __game.hint(); const o = { lv: __game.hintLv, ing: document.querySelectorAll(".ing.hint").length }; __game.state.cur.answer.forEach((t) => __game.add(t)); __game.finish(); o.stars = __game.state.stars; return o; });
+    check("ヒント2回目：次の具が光り、解くと★1", h2.lv === 2 && h2.ing === 1 && h2.stars === 1, JSON.stringify(h2));
+    // いまの積み方でもう守れない条件があれば、それを光らせる（「いちばん下は〇〇」の問題で、ちがう具を下に置く）
+    const bi = LEVELS.findIndex((L) => L.conds.some((c) => c[0] === "bottom"));
+    const h3 = await pz.evaluate((i) => {
+      __game.start(i); const c = __game.state.cur, k = c.conds.findIndex((x) => x[0] === "bottom"), wrong = c.items.find((t) => t !== c.conds[k][1]);
+      __game.add(wrong); __game.hint(); const li = [...document.querySelectorAll("ul.conds li")];
+      return { k, focus: li.findIndex((e) => e.classList.contains("focus")), toast: document.getElementById("toast").textContent };
+    }, bi);
+    check("積み方でもう守れない条件（いちばん下）があれば、その条件を光らせて「もう守れない」と言う", h3.focus === h3.k && /もう守れない/.test(h3.toast), JSON.stringify(h3));
+    // 1つずつなら守れるが全部いっしょには守れない積み方でも、1回目のヒントで条件が1つ光る（2人目の下にオニオン。2026-11-04 CodeRabbit の指摘：何も光らず★だけ減っていた）
+    const h4 = await pz.evaluate(() => {
+      __game.start(1); __game.add("onion"); __game.hint();
+      return { lv: __game.hintLv, focus: document.querySelectorAll("ul.conds li.focus").length, toast: document.getElementById("toast").textContent };
+    });
+    check("2人目でオニオンを下に置いて1回目のヒント：どの条件も1つずつなら守れるが、条件が1つ光る", h4.lv === 1 && h4.focus === 1 && /見直す/.test(h4.toast), JSON.stringify(h4));
+    // 40人 × まちがった置き方（下に答えとちがう具を1枚・逆順に2枚・逆順に3枚）：1回目のヒントでヒントを使ったなら、必ず条件が1つ光る
+    const hw = await pz.evaluate((LV) => {
+      const bad = []; let n = 0;
+      LV.forEach((L, i) => {
+        const tries = [...new Set(L.items.filter((x) => x !== L.answer[0]))].map((x) => [x]);
+        const rv = [...L.answer].reverse(); tries.push(rv.slice(0, 2), rv.slice(0, 3));
+        tries.forEach((st) => {
+          __game.start(i); st.forEach((t) => __game.add(t)); __game.hint(); n++;
+          const lit = document.querySelectorAll("ul.conds li.focus").length;
+          if (__game.hintLv !== 1 || lit !== 1) bad.push(i + 1 + ":" + st.join("/"));
+        });
+      });
+      return { bad, n };
+    }, LEVELS);
+    check(`40人 × まちがった置き方（${hw.n}通り）すべてで、1回目のヒントが条件を1つ光らせる`, hw.bad.length === 0 && hw.n >= 200, hw.bad.slice(0, 5).join(" "));
+    // 40人と、きょうのわがまま200日分：何も積んでいないとき、考えどころ（まだ決まっていない条件）が必ず1つ見つかる
+    const fc = await pz.evaluate((n) => { const bad = []; for (let i = 0; i < n; i++) { __game.start(i); const f = __game.focusCond(); if (f.k < 0 || f.broken) bad.push(i + 1); } return bad; }, LEVELS.length);
+    const fcd = await pz.evaluate(() => { const bad = []; for (let d = 0; d < 200; d += 1) { __game.setToday(d + 1); __game.startDaily(); const f = __game.focusCond(); if (f.k < 0 || f.broken) bad.push(d); } __game.setToday(null); return bad; });
+    check("40人ときょうのわがまま200日分で、1回目のヒントが必ず条件を1つ示す", fc.length === 0 && fcd.length === 0, fc.concat(fcd).join(","));
+    // 10b. できあがりの瞬間、お客さんの吹き出しが満足のひとことに替わる
+    const say = await pz.evaluate(() => { __game.start(1); const before = document.getElementById("say").textContent; __game.state.cur.answer.forEach((t) => __game.add(t)); __game.finish(); return { before, after: document.getElementById("say").textContent }; });
+    check("できあがると、お客さんの吹き出しが満足のひとことに替わる", say.before !== say.after && /^「.+」$/.test(say.after) && !names.some((n) => say.after.includes(n)), JSON.stringify(say));
+    // 10c. 実績：遊んだ日は「きょう」と「あとから」を合わせた数（同じ日は1回）。まだの実績は「いま/目標」を出す。ホームから実績の画面を開ける
+    await pz.evaluate(() => localStorage.setItem("wagamamaBurger1", JSON.stringify({ best: [3, 3], guided: true, log: { 10: 3, 11: 2, 13: 1 }, past: { 12: 2, 13: 3 } })));
+    await pz.reload(); await pz.evaluate(() => { __game.setToday(14); __game.showTitle(); });
+    const a1 = await pz.evaluate(() => ({ played: __game.playedDays(), sub: document.getElementById("achSub").textContent }));
+    await pz.click("#achBtn");
+    const a2 = await pz.evaluate(() => {
+      const li = [...document.querySelectorAll("#ach .badges li")], d7 = li[__game.BADGES.findIndex((b) => b[0] === "d7")];
+      const r = document.getElementById("achBtn").getBoundingClientRect();
+      return { vis: !document.getElementById("ach").hidden && document.getElementById("title").hidden, n: li.length, d7: d7.textContent, d7on: d7.classList.contains("on"), bars: document.querySelectorAll("#ach .badges li:not(.on) .pg i").length, locked: document.querySelectorAll("#ach .badges li:not(.on)").length, wide: document.documentElement.scrollWidth > innerWidth };
+    });
+    await pz.screenshot({ path: path.join(root, "qa-report", "ach-320.png"), fullPage: true }).catch(() => {});
+    await pz.click("#achBack");
+    const a3 = await pz.evaluate(() => !document.getElementById("title").hidden && document.getElementById("ach").hidden);
+    check("実績：遊んだ日は合計で数え（きょう3日＋あとから2日・重なり1日＝4日）、ホームのボタンから実績の画面が開き、まだのものに「4/7」と進み具合のバーが出て、320px で崩れず戻れる",
+      a1.played === 4 && /\/ 18/.test(a1.sub) && a2.vis && a2.n === 18 && /4\/7/.test(a2.d7) && !a2.d7on && a2.bars === a2.locked && !a2.wide && a3, JSON.stringify({ a1, a2, a3 }));
+    // 新しく取れた実績は、結果の画面に小さく「🏅 実績：」と残る（取らなかったときは出ない）
+    await pz.evaluate(() => localStorage.setItem("wagamamaBurger1", JSON.stringify({ best: [], guided: true }))); await pz.reload();
+    const g1 = await pz.evaluate(() => { __game.start(0); __game.state.cur.answer.forEach((t) => __game.add(t)); __game.finish(); const e = document.getElementById("gotAch"); const o = { first: !e.hidden && e.offsetParent !== null ? e.textContent : "" }; __game.start(0); __game.state.cur.answer.forEach((t) => __game.add(t)); __game.finish(); o.second = !e.hidden; return o; });
+    check("実績を取った結果の画面に「🏅 実績：はじめての一品」と残り、取らなかったときは出ない", /🏅 実績：.*はじめての一品/.test(g1.first) && !g1.second, JSON.stringify(g1));
+    // 10d. カレンダー：ひと月のます目。きょうの★・あとからの↺★・取りこぼした日は押せるます。前の月へ戻れ、2026年11月より前と今月より先へは行けない
+    // 「きょう」は QA_DAY（日の番号。ふだん 34 = 2026-12-07）で変えられる。月をまたぐ値（例：QA_DAY=29 = 12/2）でも通るよう、日を読む前にその日の月まで「前の月」で戻る
+    const T = +(process.env.QA_DAY || 34);
+    const ymOf = (d) => { const t = new Date(Date.UTC(2026, 10, 3) + d * 86400000); return [t.getUTCFullYear(), t.getUTCMonth() + 1, t.getUTCDate()]; };
+    const calTo = async (d) => {
+      const [y, m] = ymOf(d);
+      for (let k = 0; k < 40 && (await pz.textContent("#calTitle")) !== `${y}年${m}月`; k++) { if (await pz.locator("#calPrev").isDisabled()) break; await pz.click("#calPrev"); }
+      return pz.evaluate((n) => { const e = document.querySelector('.cal [data-n="' + n + '"]'); return e ? { tag: e.tagName, text: e.textContent, cls: e.className, d: e.dataset.d } : null; }, ymOf(d)[2]);
+    };
+    const reopen = async () => { await pz.evaluate((t) => { __game.setToday(t); __game.showTitle(); }, T); await pz.click("#calBtn"); };
+    await pz.evaluate((T) => { const log = {}; log[T - 4] = 3; log[T - 3] = 2; log[T - 1] = 1; const past = {}; past[T - 2] = 2; localStorage.setItem("wagamamaBurger1", JSON.stringify({ best: [], guided: true, log, past })); }, T);
+    await pz.reload(); await reopen();
+    const head = await pz.evaluate(() => {
+      const small = [...document.querySelectorAll(".cal button.mc, .calhead button")].filter((b) => b.getBoundingClientRect().height < 44).length;
+      return { title: document.getElementById("calTitle").textContent, nextOff: document.getElementById("calNext").disabled, sum: document.getElementById("calSum").textContent, small, wide: document.documentElement.scrollWidth > innerWidth, open: document.getElementById("log").open };
+    });
+    await pz.screenshot({ path: path.join(root, "qa-report", "calendar-320.png"), fullPage: true }).catch(() => {});
+    const cells = {};
+    for (const d of [T - 4, T - 3, T - 2, T - 1]) { await reopen(); cells[d] = await calTo(d); }
+    await reopen(); const todayCell = await pz.evaluate((n) => document.querySelector('.cal [data-n="' + n + '"]').className, ymOf(T)[2]);
+    const [ty, tm] = ymOf(T);
+    check(`カレンダー（きょう #${T + 1}）：今月のます目に、きょうの★・あとからの↺★が出て（前の月の日は「前の月」で戻って読む）、押せる所は44px以上。連続は1日以上のときだけ。320px で崩れない`,
+      head.open && head.title === `${ty}年${tm}月` && head.nextOff && cells[T - 4]?.text === "★3" && /s2/.test(cells[T - 3]?.cls) && cells[T - 2]?.text === "↺★2" && cells[T - 1]?.text === "★1" && /today/.test(todayCell) && /🔥 1日連続/.test(head.sum) && head.small === 0 && !head.wide,
+      JSON.stringify({ head, cells, todayCell }));
+    // 取りこぼした日はどれも、その日の月まで戻ると押せるますになっている
+    const missed = await pz.evaluate(() => __game.missedDays());
+    const notBtn = [];
+    for (const d of missed) { await reopen(); const c = await calTo(d); if (!c || c.tag !== "BUTTON" || +c.d !== d) notBtn.push(d); }
+    check(`カレンダー：取りこぼした日（${missed.length}日）はすべて、その日の月で押せるます`, missed.length === Math.min(T, 27) - 4 && notBtn.length === 0, notBtn.join(","));
+    // いちばん前の月（2026年11月）まで戻れ、それより前へは行けない。11/1・11/2（始まる前）は押せない
+    await reopen();
+    for (let k = 0; k < 40 && !(await pz.locator("#calPrev").isDisabled()); k++) await pz.click("#calPrev");
+    const c2 = await pz.evaluate(() => ({ title: document.getElementById("calTitle").textContent, before: [1, 2].map((n) => document.querySelector('.cal [data-n="' + n + '"]').tagName) }));
+    check("カレンダー：前の月をたどると2026年11月で止まり、11/1・11/2（始まる前）は押せない", c2.title === "2026年11月" && c2.before.every((t) => t === "I"), JSON.stringify(c2));
+    const pickD = missed[missed.length - 1];
+    await reopen(); await calTo(pickD);
+    await pz.click(`.cal button.mc[data-d="${pickD}"]`);
+    const c3 = await pz.evaluate(() => ({ mode: __game.state.mode, items: __game.state.cur.items, conds: __game.state.cur.conds }));
+    check("カレンダーの取りこぼした日を押すと、その日の問題（makeDaily と同じ）をあとから遊べる", c3.mode === "past" && JSON.stringify([c3.items, c3.conds]) === JSON.stringify([makeDaily(pickD).items, makeDaily(pickD).conds]), JSON.stringify({ pickD, mode: c3.mode }));
+    // 連続が0のときは、カレンダーにも連続の言葉を出さない
+    const c4 = await pz.evaluate(() => { __game.setToday(40); __game.showTitle(); return document.getElementById("calSum").textContent; });
+    check("連続が0の日は、カレンダーに連続の言葉を出さない", !/連続/.test(c4), c4);
+    // 10e. あとから：300日分、その日の問題が makeDaily と同じで、解いても今日の記録（log）・連続・daily を変えない
+    await pz.evaluate(() => localStorage.setItem("wagamamaBurger1", JSON.stringify({ best: [], guided: true, log: { 400: 3 } }))); await pz.reload();
+    const late = await pz.evaluate(() => {
+      const out = []; const r0 = __game.rec();
+      for (let d = 5; d < 305; d++) {
+        __game.setToday(d + 3); __game.startPast(d); const c = __game.state.cur;
+        out.push([d, __game.state.mode, JSON.stringify([c.items, c.conds])]);
+        c.answer.forEach((t) => __game.add(t)); __game.finish();
+      }
+      const r = __game.rec(); return { out, logKeys: Object.keys(r.log), past: Object.keys(r.past).length, streak: r.streak, daily: r.daily, r0daily: r0.daily };
+    });
+    const lateBad = late.out.filter(([d, m, j]) => m !== "past" || j !== JSON.stringify([makeDaily(d).items, makeDaily(d).conds])).map(([d]) => d);
+    check("あとから：300日分すべて、その日の問題（makeDaily）と同じで、解いても今日の記録・連続日数・daily を変えない", lateBad.length === 0 && late.past >= 300 && !late.logKeys.some((d) => +d >= 5 && +d < 305) && JSON.stringify(late.daily) === JSON.stringify(late.r0daily) && late.streak.n <= 1, JSON.stringify({ lateBad: lateBad.slice(0, 5), past: late.past, streak: late.streak }));
+    // 古いタブ：別のタブがもう解いた日は、あとから遊ばずタイトルへ戻って知らせる
+    const old = await pz.evaluate(() => {
+      __game.setToday(500); __game.showTitle();
+      const r = JSON.parse(localStorage.getItem("wagamamaBurger1")); r.past[495] = 2; localStorage.setItem("wagamamaBurger1", JSON.stringify(r));
+      __game.startPast(495); return { mode: __game.state.mode === "past" && !document.getElementById("play").hidden, title: !document.getElementById("title").hidden, note: document.getElementById("tnote").textContent };
+    });
+    check("別のタブでもう解いた日は、あとから遊ばずにタイトルへ戻り「もう解いてあります」と出る", !old.mode && old.title && /もう解いて/.test(old.note), JSON.stringify(old));
+    // 10f. キーで選んだときの枠：タイトル・実績の画面のボタンとリンクは、focus-visible で2px以上の枠が出る
+    await pz.evaluate(() => { __game.setToday(null); __game.showTitle(); document.getElementById("log").open = true; });
+    await pz.keyboard.press("Tab");
+    const thin = await pz.evaluate(async () => {
+      const bad = [];
+      const look = () => [...document.querySelectorAll("button, a, summary")].filter((b) => b.offsetParent).forEach((b) => { b.focus(); const cs = getComputedStyle(b); if (b.matches(":focus-visible") && (cs.outlineStyle === "none" || parseFloat(cs.outlineWidth) < 2)) bad.push(b.id || b.className || b.textContent.trim().slice(0, 6)); });
+      look(); __game.showAch(); look(); __game.showTitle(); return bad;
+    });
+    check("タイトル・カレンダー・実績のボタンは、キーで選ぶと2px以上の枠が出る", thin.length === 0, thin.join(","));
+    // 10g. 押せる所の大きさ（実績の画面・ホームの実績とカレンダー・記録帳）
+    const smallZ = await pz.evaluate(() => {
+      const f = () => [...document.querySelectorAll("button, a, summary")].filter((b) => b.offsetParent && !b.classList.contains("ly")).map((b) => { const r = b.getBoundingClientRect(); return [b.id || b.className || b.textContent.trim().slice(0, 6), r.height]; }).filter(([, h]) => h < 44).map(([n, h]) => n + ":" + Math.round(h));
+      __game.showTitle(); document.getElementById("log").open = true; const a = f(); __game.showAch(); return a.concat(f());
+    });
+    check("記録帳・カレンダー・実績の画面の押せる所は高さ44px以上（320px）", smallZ.length === 0, smallZ.join(" "));
+    await pz.close();
+    check("やりこみの確かめでページのエラーが無い", errZ.length === 0, errZ.join(" / "));
+  }
+
   // 動きを減らす設定の人には、紙吹雪を出さない
   const pr = await browser.newPage({ viewport: { width: 390, height: 800 }, reducedMotion: "reduce" });
   pr.on("pageerror", (e) => errors.push(e.message));

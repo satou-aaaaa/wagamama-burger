@@ -1,7 +1,7 @@
 // わがままバーガーを端末に保存して、電波が無くても遊べるようにする（PWA）。
 // 画面は先にネットを見て、つながらないときだけ保存したものを使う（直した版がすぐ届く）。
 // 記録（localStorage）には触らない。外へ何も送らない（よそのサイトへの通信は扱わない）。
-const CACHE = "burger-v5";
+const CACHE = "burger-v6";
 const SHELL = ["./", "./index.html", "./rules.js", "./levels.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", (e) => {
