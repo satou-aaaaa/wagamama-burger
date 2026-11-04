@@ -507,6 +507,27 @@ try {
       return { k, focus: li.findIndex((e) => e.classList.contains("focus")), toast: document.getElementById("toast").textContent };
     }, bi);
     check("積み方でもう守れない条件（いちばん下）があれば、その条件を光らせて「もう守れない」と言う", h3.focus === h3.k && /もう守れない/.test(h3.toast), JSON.stringify(h3));
+    // 1つずつなら守れるが全部いっしょには守れない積み方でも、1回目のヒントで条件が1つ光る（2人目の下にオニオン。2026-11-04 CodeRabbit の指摘：何も光らず★だけ減っていた）
+    const h4 = await pz.evaluate(() => {
+      __game.start(1); __game.add("onion"); __game.hint();
+      return { lv: __game.hintLv, focus: document.querySelectorAll("ul.conds li.focus").length, toast: document.getElementById("toast").textContent };
+    });
+    check("2人目でオニオンを下に置いて1回目のヒント：どの条件も1つずつなら守れるが、条件が1つ光る", h4.lv === 1 && h4.focus === 1 && /見直す/.test(h4.toast), JSON.stringify(h4));
+    // 40人 × まちがった置き方（下に答えとちがう具を1枚・逆順に2枚・逆順に3枚）：1回目のヒントでヒントを使ったなら、必ず条件が1つ光る
+    const hw = await pz.evaluate((LV) => {
+      const bad = []; let n = 0;
+      LV.forEach((L, i) => {
+        const tries = [...new Set(L.items.filter((x) => x !== L.answer[0]))].map((x) => [x]);
+        const rv = [...L.answer].reverse(); tries.push(rv.slice(0, 2), rv.slice(0, 3));
+        tries.forEach((st) => {
+          __game.start(i); st.forEach((t) => __game.add(t)); __game.hint(); n++;
+          const lit = document.querySelectorAll("ul.conds li.focus").length;
+          if (__game.hintLv !== 1 || lit !== 1) bad.push(i + 1 + ":" + st.join("/"));
+        });
+      });
+      return { bad, n };
+    }, LEVELS);
+    check(`40人 × まちがった置き方（${hw.n}通り）すべてで、1回目のヒントが条件を1つ光らせる`, hw.bad.length === 0 && hw.n >= 200, hw.bad.slice(0, 5).join(" "));
     // 40人と、きょうのわがまま200日分：何も積んでいないとき、考えどころ（まだ決まっていない条件）が必ず1つ見つかる
     const fc = await pz.evaluate((n) => { const bad = []; for (let i = 0; i < n; i++) { __game.start(i); const f = __game.focusCond(); if (f.k < 0 || f.broken) bad.push(i + 1); } return bad; }, LEVELS.length);
     const fcd = await pz.evaluate(() => { const bad = []; for (let d = 0; d < 200; d += 1) { __game.setToday(d + 1); __game.startDaily(); const f = __game.focusCond(); if (f.k < 0 || f.broken) bad.push(d); } __game.setToday(null); return bad; });

@@ -676,7 +676,13 @@ function focusCond() {
   var rest = perms(left).map(function (o) { return stack.concat(o); }), best = -1, bestN = Infinity, ok = 0;
   var cnt = cur.conds.map(function (c) { return rest.filter(function (o) { return check(o, [c])[0]; }).length; });
   rest.forEach(function (o) { if (check(o, cur.conds).every(Boolean)) ok++; });
-  if (!ok) { var broken = cnt.indexOf(0); return { k: broken, broken: true }; }
+  if (!ok) {
+    var broken = cnt.indexOf(0);
+    if (broken >= 0) return { k: broken, broken: true };
+    // 1つずつなら守れるが、全部いっしょには守れない積み方：残りの積み方をいちばん多く外す条件を光らせる（2026-11-04 CodeRabbit の指摘）
+    cnt.forEach(function (n, k) { if (n < bestN) { bestN = n; best = k; } });
+    return { k: best, broken: false, stuck: true };
+  }
   cnt.forEach(function (n, k) { if (n < rest.length && n < bestN) { bestN = n; best = k; } });
   return { k: best, broken: false };
 }
@@ -685,12 +691,15 @@ function hint() {
   var ans = cur.answer, i = 0; while (i < stack.length && stack[i] === ans[i]) i++;
   // 全部正しく積めているときはヒントを使ったことにしない（星が減らないように）
   if (i === ans.length) { toast("もう完成！「できあがり！」を押して"); return; }
-  usedHint = true;
   if (hintLv === 0) {
-    hintLv = 1; var f = focusCond(); hintCond = f.k; hintAt = hintIng = null; render();
-    toast(f.k < 0 ? "積んだ中に、見直す所があるよ" : f.broken ? "👀 この条件が、もう守れない" : "👀 まずはこの条件から");
+    var f = focusCond();
+    // 光らせる条件が無いのは、残りの積み方が1通りで全部守れるときだけ。ヒントを使ったことにしない
+    if (f.k < 0) { toast("あとは残りを積むだけ"); return; }
+    usedHint = true; hintLv = 1; hintCond = f.k; hintAt = hintIng = null; render();
+    toast(f.broken ? "👀 この条件が、もう守れない" : f.stuck ? "👀 積んだ中に見直す所。この条件に注目" : "👀 まずはこの条件から");
     return;
   }
+  usedHint = true;
   hintLv = 2; hintCond = -1;
   if (i < stack.length) { hintAt = i; hintIng = null; render(); toast("下から" + (i + 1) + "番目を見直して"); }
   else { hintAt = null; hintIng = ans[i]; render(); toast("次は" + ING[ans[i]]); }
