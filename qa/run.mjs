@@ -319,6 +319,9 @@ try {
     return c;
   };
   await pq.evaluate((src) => { window.perms = new Function("return " + src)(); }, perms.toString());
+  // おかわりの大きな入口（2026-11-05 satou さん「一日で遊べる量が少なすぎる」）：ホームの上の方に、はじめての人にも見える
+  const gx0 = await pq.evaluate(() => { const b = document.getElementById("go-x"), r = b.getBoundingClientRect(), ex = document.querySelector(".extra").getBoundingClientRect(), w = document.getElementById("weeklyBtn").getBoundingClientRect(); return { vis: !!b.offsetParent, h: r.height, top: r.top, exTop: ex.top, wb: w.bottom, t: b.textContent }; });
+  check("ホーム：おかわりの大きなボタンが今週の特大のすぐ下にあり（下の箱より上）、44px以上・はじめては ふつう", gx0.vis && gx0.h >= 44 && gx0.top >= gx0.wb && gx0.top - gx0.wb < 20 && gx0.top < gx0.exTop && /何問続けて/.test(gx0.t) && /ふつう/.test(gx0.t) && /はじめて/.test(gx0.t), JSON.stringify(gx0));
   await pq.click('#extras button[data-l="1"]');
   const e1 = await solveExtra(false);
   await pq.click("#go");
@@ -331,9 +334,27 @@ try {
   check("おかわり：ミスすると連続は0に戻り、最高は残る", xr.n === 3 && xr.run === 0 && xr.best === 2, JSON.stringify(xr));
   await pq.click("#back");
   check("タイトルのおかわりに解いた数と最高が出る", /3問/.test(await pq.textContent('#extras button[data-l="1"]')) && /最高 2/.test(await pq.textContent('#extras button[data-l="1"]')));
+  check("ホームのおかわりの大きなボタンは、遊んだいちばん上の難しさと、そのノーミス最高を出す", await pq.evaluate(() => __game.exPick()) === 1 && /むずかしい.*最高 2連続/.test(await pq.textContent("#go-x")), await pq.textContent("#go-x"));
+  await pq.click("#go-x");
+  check("ホームのおかわりの大きなボタンで、その難しさのおかわりが始まる", await pq.evaluate(() => __game.state.mode === "extra" && /おかわり・むずかしい/.test(document.getElementById("lv").textContent)));
+  await pq.click("#back");
+  // 練習（お客さん）を解いた結果には出さない。毎日1問・今週の特大の結果にだけ出す
+  await pq.evaluate(() => __game.start(0)); await solveExtra(false);
+  check("お客さん（章）の結果の画面には、おかわりへの案内を出さない", await pq.locator("#goX2").isHidden());
+  await pq.click("#back");
+  await pq.evaluate(() => __game.startWeekly()); await solveExtra(false);
+  const gxw = await pq.evaluate(() => { const b = document.getElementById("goX2"); return { vis: !!b.offsetParent, h: b.getBoundingClientRect().height, t: b.textContent }; });
+  check("今週の特大を解くと、結果の画面に「続けて遊ぶ：おかわり」とノーミス最高の大きなボタン（44px以上）", gxw.vis && gxw.h >= 44 && /続けて遊ぶ：おかわり/.test(gxw.t) && /ノーミス最高 2連続/.test(gxw.t), JSON.stringify(gxw));
+  await pq.click("#back");
   // 記録帳：きょうの星がカレンダーに、章の王冠は全員★3で付く
   await pq.evaluate(() => { __game.setToday(30); }); await pq.evaluate(() => __game.startDaily());
-  await solveExtra(false); await pq.click("#back");
+  await solveExtra(false);
+  const gxd = await pq.evaluate(() => { const b = document.getElementById("goX2"); return { vis: !!b.offsetParent, h: b.getBoundingClientRect().height, t: b.textContent }; });
+  check("きょうのわがままを解くと、結果の画面に「続けて遊ぶ：おかわり」の大きなボタン（44px以上）", gxd.vis && gxd.h >= 44 && /続けて遊ぶ：おかわり/.test(gxd.t) && /ノーミス最高 2連続/.test(gxd.t) && /むずかしい/.test(gxd.t), JSON.stringify(gxd));
+  await pq.click("#goX2");
+  const gxs = await pq.evaluate(() => ({ mode: __game.state.mode, done: __game.state.done, lv: document.getElementById("lv").textContent, n: __game.rec().extra[1].n, log: __game.rec().log[30], toast: document.getElementById("toast").classList.contains("on") }));
+  check("結果の画面の「続けて遊ぶ」で、おかわりの次の問題が始まる（きょうの記録はそのまま・前の知らせを持ち越さない）", gxs.mode === "extra" && !gxs.done && /おかわり・むずかしい/.test(gxs.lv) && gxs.n === 3 && gxs.log === 3 && !gxs.toast, JSON.stringify(gxs));
+  await pq.click("#back");
   await pq.click("#log summary");
   const logText = await pq.textContent("#logBody");
   check("記録帳に、きょうの星（カレンダー）・解いた日・おかわりの記録が出る", (await pq.locator(".cal i.today.s3").count()) === 1 && /解いた日 1日/.test(logText) && /むずかしい3問/.test(logText), logText.slice(0, 120));
