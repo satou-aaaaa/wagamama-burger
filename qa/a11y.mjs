@@ -9,13 +9,15 @@
 //   6. キーボード（Tab）で選んだ所に枠が見える（WCAG 2.4.7）・名前の無いボタンや絵が無い（WCAG 4.1.2・1.1.1）
 //   7. 知らせを読み上げソフトに伝える場所（aria-live / role=status）がある（WCAG 4.1.3）
 //   8. 斜体の日本語が無い（BDA Dyslexia Style Guide）
+//   12. 操作のあとも設定の印が html に残る・各画面に読み上げる文（data-a11y-say）がある
 //   9. 役割や性別を決めつける言葉が無い（words は下の WORDS。ユネスコの教材のジェンダー指針）
 //  11. はじめに読むファイル（index.html と同じサイトの script）が 1.5MB 以下（遅い回線・古い端末。game-dev.md A12）
 //  10. 色覚（P型・D型・T型）の見え方の絵を qa-report/ に出す（人と AI が目で見る。色だけで分けていないかは各ゲームの qa/run.mjs が見る）
 // ゲームごとの許し・追加の画面は qa/a11y.json（無くてよい）:
 //   { "screens": [{ "name": "遊ぶ画面", "click": ["#go-d"] }],          // ホームのほかに測る画面（順に押す）
 //     "skipContrast": [{ "selector": ".ticket-num", "reason": "…" }],  // 理由の無い許しは置かない
-//     "allowWords": [{ "word": "主人", "reason": "店の主（あるじ）の意味" }] }
+//     "allowWords": [{ "word": "主人", "reason": "店の主（あるじ）の意味" }],
+//     "noSay": [{ "screen": "実績", "reason": "…" }] }                     // 読み上げる文が要らない画面（理由つき）
 import { readFileSync, writeFileSync, mkdirSync, existsSync, readdirSync } from "node:fs";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import path from "node:path";
@@ -25,7 +27,7 @@ const cfgPath = path.join(root, "qa", "a11y.json");
 const cfg = existsSync(cfgPath) ? JSON.parse(readFileSync(cfgPath, "utf8")) : {};
 const results = [];
 const check = (name, ok, detail = "") => results.push({ name, ok: !!ok, detail: String(detail).slice(0, 600) });
-for (const k of ["skipContrast", "allowWords"]) for (const a of cfg[k] || []) if (!a.reason) { console.error(`qa/a11y.json の ${k} に reason の無い行がある（理由の無い許しは置かない）`); process.exit(2); }
+for (const k of ["skipContrast", "allowWords", "noSay"]) for (const a of cfg[k] || []) if (!a.reason) { console.error(`qa/a11y.json の ${k} に reason の無い行がある（理由の無い許しは置かない）`); process.exit(2); }
 
 const html = readFileSync(path.join(root, "index.html"), "utf8");
 // 1. 設定の部品がひな形と同じか（ひな形が手元にあれば中身まで。CI では印と版を見る）
@@ -35,6 +37,11 @@ const tplPath = process.env.A11Y_TEMPLATE || path.join(root, "..", "shared-workf
 const tpl = existsSync(tplPath) ? block(readFileSync(tplPath, "utf8")) : "";
 check("見やすさの設定（shared-workflows template/a11y/a11y.html）が入っている", mine && /window\.A11y/.test(mine) && /<\/head>/.test(html.slice(html.indexOf("a11y:end"))));
 if (tpl) check("見やすさの設定がひな形と同じ中身（直すのはひな形。写しを直さない）", mine === tpl, mine === tpl ? "" : "ひな形からもう一度写す");
+
+// 1 の続き：ゲームが html の class を丸ごと書き換えると、設定の印（a11y-read など）が消える（2026-11-05 おつかいメモ。incidents/2026-11-05-a11y-class-and-say-gaps.md）
+{ const body = html.replace(/<!-- a11y:begin[\s\S]*?<!-- a11y:end -->/, "");
+  const hit = body.match(/(documentElement|\bhtml|\broot)\.className\s*=(?!=)[^;\n]{0,60}/g) || [];
+  check("html の class を丸ごと書き換えない（classList.add/remove/toggle を使う。設定の印が消える）", hit.length === 0, hit.join(" / ")); }
 
 // 2. lang・拡大
 const vp = (html.match(/<meta name="viewport" content="([^"]+)"/) || [])[1] || "";
@@ -99,13 +106,13 @@ async function go(page, sc) {
   await page.waitForTimeout(700); // 出てくる動きが終わるのを待つ
 }
 
-// 3. コントラスト（字のある要素ごとに、字の色とうしろの色を重ねて比べる。うしろが絵・グラデーションのときは測れないので数えない）
+// 3. コントラスト（字のある要素ごとに、字の色とうしろの色を重ねて比べる。うしろが絵・グラデーションのときは測れないので数えない。html・body の地の模様は地の色で測る）
 const contrastFn = (skip) => {
   const parse = (c) => { const m = c.match(/rgba?\(([^)]+)\)/); if (!m) return null; const p = m[1].split(/[,/\s]+/).filter(Boolean).map(Number); return [p[0], p[1], p[2], p.length > 3 ? p[3] : 1]; };
   const over = (top, bot) => { const a = top[3] + bot[3] * (1 - top[3]); return a === 0 ? [0, 0, 0, 0] : [0, 1, 2].map((i) => (top[i] * top[3] + bot[i] * bot[3] * (1 - top[3])) / a).concat(a); };
   const lum = (c) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]); };
   const bad = [];
-  let measured = 0;
+  let measured = 0, skipped = 0;
   for (const el of document.querySelectorAll("body *")) {
     if (el.closest("svg,canvas,[aria-hidden=true],[hidden],dialog:not([open])") || (skip && el.closest(skip))) continue;
     const own = [...el.childNodes].some((n) => n.nodeType === 3 && /[^\s\p{Emoji_Presentation}\p{Extended_Pictographic}‍️★☆・…、。]/u.test(n.textContent));
@@ -119,12 +126,16 @@ const contrastFn = (skip) => {
     while (node && node.nodeType === 1) {
       const s = getComputedStyle(node);
       opa *= +s.opacity;
-      if (s.backgroundImage && s.backgroundImage !== "none") { unsure = true; break; }
-      const c = parse(s.backgroundColor); if (c && c[3] > 0) layers.push(c);
+      const c = parse(s.backgroundColor);
+      if (s.backgroundImage && s.backgroundImage !== "none") {
+        // html・body の地の模様（和紙・布目など）は、下に敷いた地の色で測る（2026-11-05 まんなか漢字で全部の字が測れず、金の字の不足を見逃した）
+        if ((node === document.body || node === document.documentElement) && c && c[3] === 1) { layers.push(c); break; }
+        unsure = true; break;
+      } if (c && c[3] > 0) layers.push(c);
       if (c && c[3] === 1) break;
       node = node.parentElement;
     }
-    if (unsure) continue;
+    if (unsure) { skipped++; continue; }
     layers.push([255, 255, 255, 1]);
     for (const c of layers.reverse()) bg = over(c, bg);
     fg = over([fg[0], fg[1], fg[2], fg[3] * opa], bg);
@@ -137,19 +148,28 @@ const contrastFn = (skip) => {
       bad.push(`${name}「${el.textContent.trim().slice(0, 12)}」${ratio.toFixed(2)}<${need}`);
     }
   }
-  return { bad, measured };
+  return { bad, measured, skipped };
 };
 for (const [label, settings] of [["ふつう", null], ["設定を全部入れた", ALL_ON]]) {
   for (const sc of screens) {
     const { ctx, page, errors } = await openPage({ settings });
     try {
       await go(page, sc);
-      const { bad, measured } = await page.evaluate(contrastFn, skipSel);
-      check(`文字のコントラストが 4.5:1 以上（大きい字は 3:1）：${sc.name}・${label}（WCAG 1.4.3）`, measured > 0 && bad.length === 0, bad.length ? `${bad.length}か所 ${bad.slice(0, 8).join(" / ")}` : `${measured}か所を測った`);
+      const { bad, measured, skipped } = await page.evaluate(contrastFn, skipSel);
+      check(`文字のコントラストが 4.5:1 以上（大きい字は 3:1）：${sc.name}・${label}（WCAG 1.4.3）`, measured > 0 && bad.length === 0, bad.length ? `${bad.length}か所 ${bad.slice(0, 8).join(" / ")}` : `${measured}か所を測った${skipped ? `（うしろが絵・グラデーションで測れない${skipped}か所は自分の目で見る）` : ""}`);
       check(`エラーが出ない：${sc.name}・${label}`, errors.length === 0, errors.join(" / "));
       // 設定の印（html の class）で画面そのものがずれないか（2026-11-05 html.a11y-say にボタンの fixed が当たり、画面が左へずれた。incidents/2026-11-05-a11y-say-class-clash.md）
       const lay = await page.evaluate(() => ({ pos: getComputedStyle(document.documentElement).position, wide: document.documentElement.scrollWidth > innerWidth + 1, left: Math.round(document.body.getBoundingClientRect().left) }));
       check(`設定の印で画面がずれない・横にはみ出さない：${sc.name}・${label}`, lay.pos === "static" && !lay.wide && lay.left >= 0, JSON.stringify(lay));
+      if (settings) {
+        // 押して進んだあとも設定の印が html に残っているか（ゲームが className を書き換えると消える）
+        const lost = await page.evaluate((keys) => keys.filter((k) => !document.documentElement.classList.contains("a11y-" + k)), Object.keys(settings).filter((k) => k !== "ruby"));
+        check(`操作のあとも設定の印（html の a11y- の class）が残る：${sc.name}`, lost.length === 0, lost.length ? `消えた: ${lost.join(",")}` : "");
+        // 「🔊 読む」で読む文があるか（data-a11y-say、無ければ見出し・知らせの場所。どちらも無いと押しても設定の画面が開くだけ）
+        const says = await page.evaluate(() => { const vis = (el) => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== "hidden" && !el.closest("[hidden],[aria-hidden=true],[inert]") && (el.getAttribute("aria-label") || el.innerText || "").trim(); }; return { say: [...document.querySelectorAll("[data-a11y-say]")].filter(vis).length, head: [...document.querySelectorAll("h1,h2,[role=status],[aria-live]")].filter(vis).length }; });
+        const noSay = (cfg.noSay || []).find((n) => n.screen === sc.name);
+        check(`「🔊 読む」で読む文がある（data-a11y-say か見出し）：${sc.name}`, says.say > 0 || says.head > 0 || noSay, noSay ? `許し：${noSay.reason}` : says.say ? `${says.say}か所` : `data-a11y-say は無く、見出し・知らせ ${says.head}か所を読む（問題・お題のある画面なら data-a11y-say を付ける）`);
+      }
     } catch (e) { check(`画面を開ける：${sc.name}・${label}`, false, e.message); }
     await ctx.close();
   }
@@ -170,6 +190,9 @@ for (const sc of screens) {
         if (el.closest("svg,canvas,[aria-hidden=true],[hidden]")) continue;
         const cs = getComputedStyle(el);
         if (!/hidden|clip/.test(cs.overflowX + cs.overflowY) || cs.textOverflow === "ellipsis") continue;
+        // 読み上げ用に見えなくした字（.sr など、1px の箱や clip）は数えない
+        const b = el.getBoundingClientRect();
+        if (b.width <= 2 || b.height <= 2 || (cs.clip && cs.clip !== "auto") || (cs.clipPath && cs.clipPath !== "none")) continue;
         if (![...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) continue;
         if (el.scrollHeight > el.clientHeight + 2 || el.scrollWidth > el.clientWidth + 2) cut.push(`${el.tagName.toLowerCase()}${el.id ? "#" + el.id : ""}「${el.textContent.trim().slice(0, 10)}」`);
       }
