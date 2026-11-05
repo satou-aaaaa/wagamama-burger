@@ -31,6 +31,7 @@ node qa/run.mjs   # 全問の答えが1つ・要らない条件が無い・ヒ�
 - 応援は Ko-fi（https://ko-fi.com/satouaaaaa）へのただのリンクだけ。遊ぶのは無料のまま、有料版は置かない（GitHub Pages は売り買いが主目的のサイトに使えない）。
 - 機能を足す・直すたびに `qa/run.mjs` に検査を足す。乱数で動く部分は1回でなく何百回も試す。
 - PWA（`manifest.webmanifest`・`sw.js`・`icon-*.png`）：画面のファイルを足したら `sw.js` の `SHELL` にも足し、中身を大きく変えたら `CACHE` の版を上げる。アイコンは `node tools/make-icons.cjs` で作り直せる。
+- 引き継ぎコード（別の端末へ記録を移す）：`transfer.js`・`qa/transfer-check.mjs` は shared-workflows の `template/` の写し（ここで直さない。直すときはひな形を直して配り、`引き継ぎの版` を上げる）。`index.html` の script の `data-keys` は記録のキーだけを書く。記録の形を変えたら `qa/run.mjs` の `checkTransfer` の `sample` も合わせる。sw.js の `SHELL` から `./transfer.js` を外さない（shared-workflows `routines/game-dev.md`「引き継ぎコード」）。
 - 公開リポジトリなので、個人情報・鍵を入れない。
 
 ## 公開
