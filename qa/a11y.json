@@ -1,0 +1,9 @@
+{
+  "screens": [
+    { "name": "遊ぶ画面", "click": ["#cont"] },
+    { "name": "結果の画面", "click": ["#cont", "#guideOk", ".ing[data-t=egg]", ".ing[data-t=onion]", ".ing[data-t=patty]", "#go"] },
+    { "name": "まちがい", "click": ["#cont", "#guideOk", ".ing[data-t=patty]", ".ing[data-t=onion]", ".ing[data-t=egg]", "#go"] },
+    { "name": "実績", "click": ["#achBtn"] },
+    { "name": "カレンダー", "click": ["#calBtn"] }
+  ]
+}
