@@ -19,9 +19,9 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'">
 <style>
-:root{--bg:#fff6e8;--ink:#3b2414;--sub:#8a6a50;--card:#ffffff;--line:#f0d9bd;--acc:#e8572a;--ok:#2f9e5b;--ng:#d6336c;--star:#f5b800;--stage1:#ffe9c9;--stage2:#ffd9a8}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#22170f;--ink:#fbead6;--sub:#c7a787;--card:#2f2117;--line:#4a3424;--acc:#ff7a45;--ok:#5fd08a;--ng:#ff6b9a;--stage1:#4a3020;--stage2:#3a2618}}
-:root[data-theme="dark"]{--bg:#22170f;--ink:#fbead6;--sub:#c7a787;--card:#2f2117;--line:#4a3424;--acc:#ff7a45;--ok:#5fd08a;--ng:#ff6b9a;--stage1:#4a3020;--stage2:#3a2618}
+:root{--bg:#fff6e8;--ink:#3b2414;--sub:#7a5c44;--card:#ffffff;--line:#f0d9bd;--acc:#b5400f;--onacc:#fff;--ok:#1b7340;--ng:#b8255a;--star:#f5b800;--stage1:#ffe9c9;--stage2:#ffd9a8}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#22170f;--ink:#fbead6;--sub:#c7a787;--card:#2f2117;--line:#4a3424;--acc:#ff7a45;--onacc:#22170f;--ok:#5fd08a;--ng:#ff6b9a;--stage1:#4a3020;--stage2:#3a2618}}
+:root[data-theme="dark"]{--bg:#22170f;--ink:#fbead6;--sub:#c7a787;--card:#2f2117;--line:#4a3424;--acc:#ff7a45;--onacc:#22170f;--ok:#5fd08a;--ng:#ff6b9a;--stage1:#4a3020;--stage2:#3a2618}
 *{box-sizing:border-box}
 html{overflow-x:hidden}body{overflow-x:clip} /* body を hidden にすると下の .dock の sticky が効かない */
 body{margin:0;background:var(--bg);color:var(--ink);font-family:"Hiragino Maru Gothic ProN","M PLUS Rounded 1c","Yu Gothic UI",system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
@@ -42,8 +42,8 @@ h1{font-size:20px;margin:0}
 .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
 .lvbtn{font:inherit;border:2px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;padding:6px 0;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.1}
 .lvbtn .f{font-size:22px}.lvbtn .s{font-size:10px;color:var(--star);letter-spacing:-1px;min-height:11px}
-.lvbtn.lock{opacity:.35;cursor:default}
-.lvbtn.next{border-color:var(--acc)}
+.lvbtn.lock{cursor:default;border-style:dashed;background:transparent;color:var(--sub)}
+.lvbtn.next{border-color:var(--acc);border-width:3px}.lvbtn.next .s{color:var(--acc);font-weight:700;letter-spacing:0}
 .extra{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px;margin:12px 0}
 .extra h2,.log summary{font-size:15px;margin:0 0 2px;font-weight:700}
 .extra .new{font-size:12px;color:var(--sub);margin-bottom:8px}
@@ -55,17 +55,17 @@ h1{font-size:20px;margin:0}
 .log dl{margin:0 0 10px;display:grid;grid-template-columns:auto 1fr;gap:4px 10px;font-size:14px}.log dt{color:var(--sub)}.log dd{margin:0;font-weight:700}
 .cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin:4px -10px 12px}
 .cal i,.cal button.mc{height:48px;border-radius:8px;background:var(--bg);border:1px solid var(--line);font-style:normal;font-size:11px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--sub);padding:0;line-height:1.1;min-width:0}
-.cal [data-n]::before{content:attr(data-n);font-size:9px;opacity:.75}
+.cal [data-n]::before{content:attr(data-n);font-size:9px}
 .cal i.off{visibility:hidden}.cal i.fut{opacity:.45}.cal b.wd{font-size:11px;color:var(--sub);text-align:center;font-weight:400}
 .cal button.mc{font:inherit;font-size:13px;border:1.5px dashed var(--acc);color:var(--acc);font-weight:700;cursor:pointer;width:100%}
 .calhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:6px 0 2px}.calhead b{font-size:15px}
 .calhead button{font:inherit;min-width:48px;min-height:48px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);cursor:pointer;font-size:16px}.calhead button:disabled{opacity:.3;cursor:default}
 .calsum{font-size:12px;color:var(--sub);margin:0 0 4px;min-height:1.2em}
-.after a.fb,.guide a.fb{display:inline-flex;align-items:center;min-height:48px;padding:0 12px;color:var(--sub);font-size:14px}
+.after a.fb,.guide a.fb,.guide a.ak{display:inline-flex;align-items:center;min-height:48px;padding:0 12px;color:var(--sub);font-size:14px}
 .kofi{font-size:13px;color:var(--sub);line-height:1.8;margin:12px 4px;text-align:center}.kofi a{color:var(--acc);font-weight:700;padding:14px 2px}
 .badges{list-style:none;padding:0;margin:0 0 12px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.badges li{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:6px 8px;display:grid;grid-template-columns:auto 1fr;column-gap:6px;align-items:center;opacity:.6}
-.badges li.on{opacity:1;border-color:var(--star)}
+.badges li{background:var(--bg);border:1px dashed var(--sub);border-radius:10px;padding:6px 8px;display:grid;grid-template-columns:auto 1fr;column-gap:6px;align-items:center}
+.badges li.on{border:2px solid var(--star)}
 .badges span[aria-hidden]:first-child{grid-row:span 3;font-size:22px}.badges b{font-size:12px}.badges small{font-size:10px;color:var(--sub)}
 .badges .pg{grid-column:2;display:block;height:5px;border-radius:3px;background:var(--line);margin-top:3px;overflow:hidden}.badges .pg i{display:block;height:100%;background:var(--star)}
 .badges li.on .pg{display:none}
@@ -90,7 +90,7 @@ ul.conds li.focus::before{content:"👀";flex:none}
 .foot{text-align:center;font-size:12px;color:var(--sub);margin-top:16px;line-height:1.9}
 .foot a{color:var(--sub);display:inline-flex;align-items:center;min-height:48px;padding:0 10px}
 /* 遊ぶ画面 */
-.dots{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end;max-width:180px}.dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}.dots i.done{background:var(--ok)}.dots i.cur{background:var(--acc)}
+.dots{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-end;max-width:180px}.dots i{width:7px;height:7px;border-radius:50%;background:transparent;border:1.5px solid var(--sub)}.dots i.done{background:var(--ok);border-color:var(--ok)}.dots i.cur{background:var(--acc);border-color:var(--acc);width:16px;border-radius:4px}
 .order{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px;margin:10px 0}
 .who{display:flex;align-items:center;gap:10px}
 .face{font-size:38px;line-height:1;transition:transform .3s}
@@ -98,12 +98,14 @@ ul.conds li.focus::before{content:"👀";flex:none}
 ul.conds{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:4px}
 ul.conds li{font-size:15px;padding:5px 8px;border-radius:10px;background:var(--bg);display:flex;gap:6px;align-items:center}
 ul.conds li b{width:1.2em;text-align:center;flex:none}
+ul.conds li.ng{box-shadow:inset 4px 0 0 var(--ng)}ul.conds li.ok{box-shadow:inset 4px 0 0 var(--ok)}
 ul.conds li.ok{color:var(--ok)} ul.conds li.ng{color:var(--ng);font-weight:700;animation:shake .4s}
-ul.conds li.newc::after{content:"NEW";font-size:10px;font-weight:800;color:#fff;background:var(--acc);border-radius:6px;padding:1px 5px;margin-left:auto}
+ul.conds li.newc::after{content:"NEW";font-size:10px;font-weight:800;color:var(--onacc);background:var(--acc);border-radius:6px;padding:1px 5px;margin-left:auto}
 @keyframes shake{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
 .stage{position:relative;height:350px;transition:height .2s;background:linear-gradient(var(--stage1),var(--stage2));border-radius:18px;border:2px solid var(--line);display:flex;flex-direction:column-reverse;align-items:center;padding-bottom:14px;overflow:hidden}
 .plate{position:absolute;bottom:6px;width:78%;height:12px;background:#fff;border-radius:50%;box-shadow:0 3px 0 #0002}
 .ly{position:relative;display:block;width:62%;margin-top:-2px;cursor:pointer;animation:drop .35s cubic-bezier(.3,1.4,.5,1);border:0;padding:0;font:inherit;color:inherit}
+.ly .nm{display:none;position:absolute;left:calc(100% + 6px);top:50%;transform:translateY(-50%);font-size:11px;font-weight:700;color:var(--ink);white-space:nowrap}
 .ly .num{position:absolute;left:-34px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--sub);width:24px;text-align:right}
 .ly.hint{outline:3px dashed var(--acc);outline-offset:3px;z-index:3}
 @keyframes squash{0%{scale:1}40%{scale:1.04 .86}100%{scale:1}}
@@ -127,10 +129,11 @@ ul.conds li.newc::after{content:"NEW";font-size:10px;font-weight:800;color:#fff;
 .ing{border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:14px;padding:6px 10px;display:flex;flex-direction:column;align-items:center;gap:5px;font:inherit;font-size:12px;cursor:pointer;min-width:66px;min-height:56px;justify-content:flex-end}
 .ing .ly{width:44px!important;animation:none;margin:0;cursor:inherit}
 .ing.hint{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc)}
+.ing .hm{position:absolute;top:-10px;right:-6px;font-size:16px}
 .note{font-size:12px;color:var(--sub);text-align:center;min-height:1.4em}
-button.b{font:inherit;font-size:18px;font-weight:700;border-radius:14px;padding:12px;background:var(--acc);color:#fff;border:2px solid var(--acc);cursor:pointer;width:100%;margin-top:6px}
+button.b{font:inherit;font-size:18px;font-weight:700;border-radius:14px;padding:12px;background:var(--acc);color:var(--onacc);border:2px solid var(--acc);cursor:pointer;width:100%;margin-top:6px}
 button.b.sec{background:var(--card);color:var(--ink);border-color:var(--line)}
-button.b:disabled{opacity:.35;cursor:default}
+button.b:disabled{cursor:default;background:var(--card);color:var(--sub);border-color:var(--sub);border-style:dashed}
 .sub{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}
 .sub button{font:inherit;font-size:13px;background:none;border:1px solid var(--line);color:var(--sub);border-radius:20px;padding:7px 14px;cursor:pointer}
 .sub button:disabled{opacity:.4}
@@ -138,7 +141,7 @@ button.b:disabled{opacity:.35;cursor:default}
 .toast.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
 .stars{position:absolute;top:10px;left:0;right:0;text-align:center;font-size:30px;color:var(--star);letter-spacing:4px;z-index:2;text-shadow:0 2px 0 #0002}
 .stars span{display:inline-block;animation:pop .5s backwards}
-.stars span.off{color:#0002}
+.stars span.off{color:var(--sub);text-shadow:none}
 @keyframes pop{from{transform:scale(0) rotate(-90deg)}to{transform:none}}
 .confetti{position:absolute;width:8px;height:4px;border-radius:2px;top:-10px;animation:fall 1.6s ease-in forwards;z-index:1}
 @keyframes fall{to{transform:translateY(340px) rotate(540deg);opacity:.2}}
@@ -153,8 +156,8 @@ button.b:disabled{opacity:.35;cursor:default}
 .chip{display:inline-flex;align-items:center;gap:3px;font-weight:700;white-space:nowrap}
 .chip i.ly{display:inline-block;width:18px!important;height:9px!important;margin:0;animation:none;border-width:2px;cursor:inherit}
 /* きょうのわがまま */
-.daily{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:linear-gradient(135deg,var(--acc),#f5a623);color:#fff;border:0;border-radius:18px;padding:14px 16px;margin:14px 0 4px;font:inherit;cursor:pointer;box-shadow:0 4px 0 #0002}
-.daily.weekly{background:linear-gradient(135deg,#8a3fb8,#d0569a);margin-top:0}
+.daily{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:linear-gradient(135deg,#9a3a0c,#a14a06);color:#fff;border:0;border-radius:18px;padding:14px 16px;margin:14px 0 4px;font:inherit;cursor:pointer;box-shadow:0 4px 0 #0002}
+.daily.weekly{background:linear-gradient(135deg,#7a2fa8,#a63d78);margin-top:0}
 .daily .em{font-size:36px}.daily b{display:block;font-size:18px}.daily small{font-size:13px;opacity:.95}
 .daily .go{margin-left:auto;font-size:22px}
 /* おかわりへの大きな入口（ホームと、毎日・週の問題の結果の画面） */
@@ -165,23 +168,176 @@ button.b.main small{font-size:13px;font-weight:400;color:var(--sub)}
 .banner{background:var(--card);border:2px dashed var(--acc);border-radius:14px;padding:8px 12px;margin-top:10px;font-size:14px;text-align:center}
 .guide{background:var(--card);border:2px solid var(--acc);border-radius:16px;padding:12px 14px;margin:10px 0;font-size:14px;line-height:1.7}
 .guide ol{margin:4px 0 8px;padding-left:1.4em}
-.guide button{font:inherit;font-weight:700;background:var(--acc);color:#fff;border:0;border-radius:12px;min-height:48px;padding:0 18px;cursor:pointer}
+.guide button{font:inherit;font-weight:700;background:var(--acc);color:var(--onacc);border:0;border-radius:12px;min-height:48px;padding:0 18px;cursor:pointer}
 .dock{position:sticky;bottom:0;z-index:4;background:var(--bg);padding:2px 0 calc(8px + env(safe-area-inset-bottom));box-shadow:0 -10px 10px -10px #0003}
 .after{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
 .after button{margin-top:0}
-.left{font-size:13px;font-weight:400;opacity:.9}
-.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.left{font-size:13px;font-weight:400}
+.sr{position:absolute;width:1px;height:1px;clip-path:inset(50%);margin:-1px;word-break:break-all}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.confetti{display:none}}
 /* all:unset などで枠が消えないよう、キーで選んだ所の枠はいちばん最後に強く書く */
 :is(.icon,button,a,summary):focus-visible{outline:2px solid var(--acc)!important;outline-offset:2px}
-</style></head><body><main>
+/* 色の見分けを助ける（見やすさの設定）：守れた＝青・守れない＝朱（カラーユニバーサルデザインの組）に替え、印を強める。積んだ具には名前を出す */
+html.a11y-cvd{--ok:#0072b2;--ng:#a84300}
+@media (prefers-color-scheme:dark){html.a11y-cvd:not([data-theme="light"]){--ok:#56b4e9;--ng:#e69f00}}
+html.a11y-cvd[data-theme="dark"]{--ok:#56b4e9;--ng:#e69f00}
+html.a11y-cvd ul.conds li.ng{background:repeating-linear-gradient(135deg,var(--bg) 0 6px,var(--card) 6px 12px);box-shadow:inset 6px 0 0 var(--ng)}
+html.a11y-cvd ul.conds li.ok{box-shadow:inset 6px 0 0 var(--ok)}
+html.a11y-cvd ul.conds li b{font-size:18px}
+html.a11y-cvd .stage .ly .nm{display:block}
+html.a11y-cvd .cal i.today{outline-width:3px;font-weight:800;text-decoration:underline}
+html.a11y-cvd .dots i.done{border-radius:1px}
+</style>
+<!-- a11y:begin 見やすさの設定 v3（shared-workflows template/a11y/a11y.html の写し。ここでは直さず、ひな形を直して全部のゲームへ写す。drift-check と qa/a11y.mjs が同じ中身か見る） -->
+<style id="a11y-css">
+/* だれでも：キーボードで選んだ所に太い枠（WCAG 2.4.7・2.4.13） */
+:is(button,a,input,select,textarea,summary,[tabindex]):focus-visible{outline:3px solid #1a5fd0!important;outline-offset:2px!important;box-shadow:0 0 0 5px #fff!important}
+/* 読みやすい文字：UD フォント・行間 1.7・字間を少し広げる・斜体にしない（BDA Dyslexia Style Guide） */
+html.a11y-read body{line-height:1.7}
+html.a11y-read body,html.a11y-read body :where(*:not(svg):not(svg *):not([data-a11y-keepfont]):not([data-a11y-keepfont] *)){font-family:"BIZ UDPGothic","BIZ UDGothic","UD デジタル 教科書体 NK-R","UD Digi Kyokasho NK-R","Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic UI",Meiryo,sans-serif!important;font-style:normal!important}
+html.a11y-read :is(p,li,dd,dt,blockquote,[data-a11y-say]){line-height:1.8!important;letter-spacing:.04em!important}
+html.a11y-read em,html.a11y-read i:not([aria-hidden]){font-style:normal!important;font-weight:700}
+/* 動きを減らす：揺れ・点滅・すべる動きを止める（WCAG 2.3.3。端末の「視差効果を減らす」でも自動で入る） */
+html.a11y-calm *,html.a11y-calm *::before,html.a11y-calm *::after{animation-duration:.001ms!important;animation-delay:0s!important;animation-iteration-count:1!important;transition-duration:.001ms!important;transition-delay:0s!important;scroll-behavior:auto!important}
+/* 色の見分けを助ける：ゲームごとの形・模様は各ゲームが html.a11y-cvd の下に書く。ここではリンクに下線 */
+html.a11y-cvd a{text-decoration:underline!important}
+/* ふりがな：ゲームが <ruby class="a11y-rb"> を置いた所だけ。選んだときだけ出す */
+html:not(.a11y-ruby) ruby.a11y-rb>rt{display:none}
+/* 設定の画面（どのゲームでも同じ見た目・同じ濃さ。白地に黒で 15:1） */
+.a11y-dlg{max-width:min(420px,calc(100vw - 32px));width:100%;box-sizing:border-box;border:2px solid #1d2320;border-radius:14px;padding:18px 16px 14px;background:#fffdf8;color:#1d2320;font:500 16px/1.6 "BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",Meiryo,sans-serif;letter-spacing:0}
+.a11y-dlg::backdrop{background:#0008}
+.a11y-dlg h2{font-size:19px;margin:0 0 4px;font-weight:700;line-height:1.4}
+.a11y-dlg p{margin:4px 0 10px;font-size:14px;color:#3d4440;line-height:1.6}
+.a11y-dlg label{display:flex;gap:12px;align-items:center;min-height:48px;padding:6px 4px;border-top:1px solid #1d232022;cursor:pointer;line-height:1.4}
+.a11y-dlg label small{display:block;font-size:13px;color:#3d4440}
+.a11y-dlg input[type=checkbox]{width:26px;height:26px;flex:none;accent-color:#1a5fd0;margin:0}
+.a11y-dlg .a11y-row{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.a11y-dlg button,.a11y-btn,.a11y-saybtn{min-height:44px;min-width:44px;border-radius:10px;border:2px solid #1d2320;background:#fff;color:#1d2320;font:700 15px/1.2 "BIZ UDPGothic","Hiragino Sans","Yu Gothic UI",Meiryo,sans-serif;padding:0 14px;cursor:pointer;letter-spacing:0}
+.a11y-dlg button.a11y-ok{background:#1d2320;color:#fff}
+.a11y-btn.a11y-float{position:fixed;left:max(8px,env(safe-area-inset-left,0px));bottom:max(8px,env(safe-area-inset-bottom,0px));z-index:2147483000}
+/* 読み上げボタンが、いちばん下のボタン・リンクにかぶらないよう下をあける */
+html.a11y-say body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!important}
+.a11y-saybtn{position:fixed;right:max(8px,env(safe-area-inset-right,0px));bottom:max(8px,env(safe-area-inset-bottom,0px));z-index:2147483000;box-shadow:0 2px 8px #0003}
+.a11y-saybtn[hidden],.a11y-dlg [hidden]{display:none!important}
+.a11y-note{font-size:13px!important}
+</style>
+<script id="a11y-script">
+/* 見やすさの設定（色覚・ディスレクシア・弱視・動きに弱い人のため）。外へは何も送らない。
+   設定は localStorage の a11y-v1 に置く。同じサイト（satou-aaaaa.github.io）のゲームは同じ設定を使う。
+   ゲームの側でできること：
+   - 設定を開くボタンに data-a11y-open を付ける（無ければ左下に「Aa」のボタンを出す）
+   - 読み上げる文に data-a11y-say を付ける（問題文・知らせなど）
+   - 色の見分けを助ける形・模様は html.a11y-cvd の下に CSS で書く。JS では A11y.on('cvd')
+   - 揺れ・すべる動きを JS で動かすときは、A11y.on('calm') なら止める
+   - 設定が変わると document に a11ychange が届く
+   - 設定の印は html の class「a11y-<設定の名前>」（a11y-read など）。部品の class はこれと重ならない名前にする（2026-11-05 a11y-say がボタンとぶつかった） */
+(() => {
+  const KEY = "a11y-v1";
+  const root = document.documentElement;
+  const OPTS = [
+    ["read", "読みやすい文字", "UD フォント・行間と字間を広く"],
+    ["cvd", "色の見分けを助ける", "色に形・模様・記号を足す"],
+    ["calm", "動きを減らす", "揺れ・点滅・すべる動きを止める"],
+    ["say", "読み上げのボタンを出す", "問題や知らせを声で読む（端末の中の声だけ）"],
+    ["ruby", "ふりがなを出す", "むずかしい漢字に読みを付ける"],
+  ];
+  const media = (q) => { try { return matchMedia(q).matches; } catch { return false; } };
+  let S = {};
+  try { S = JSON.parse(localStorage.getItem(KEY) || "{}") || {}; } catch { S = {}; }
+  // 決めていないものは端末の設定に合わせる（視差効果を減らす → 動きを減らす）
+  const on = (k) => (k in S ? !!S[k] : k === "calm" ? media("(prefers-reduced-motion: reduce)") : false);
+  let fontLoaded = false;
+  const loadFont = () => {
+    if (fontLoaded) return; fontLoaded = true;
+    // Google Fonts を許しているページだけ取りに行く（許していなければ端末にある UD フォントを使う）
+    const csp = (document.querySelector('meta[http-equiv="Content-Security-Policy"]') || {}).content || "";
+    if (csp && !/fonts\.googleapis\.com/.test(csp)) return;
+    const l = document.createElement("link");
+    l.rel = "stylesheet"; l.href = "https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap";
+    document.head.appendChild(l);
+  };
+  const apply = () => {
+    for (const [k] of OPTS) root.classList.toggle("a11y-" + k, on(k));
+    if (on("read")) loadFont();
+    if (sayBtn) sayBtn.hidden = !on("say");
+    if (!on("say")) stop();
+  };
+  const set = (k, v) => {
+    S[k] = !!v;
+    try { localStorage.setItem(KEY, JSON.stringify(S)); } catch { /* 保存できなくても今の画面には効かせる */ }
+    apply();
+    document.dispatchEvent(new CustomEvent("a11ychange", { detail: { key: k, on: !!v } }));
+  };
+
+  // 読み上げ：端末の中の日本語の声だけを使う（外へ文字を送る声は使わない）
+  const voice = () => { try { return speechSynthesis.getVoices().find((v) => /^ja/i.test(v.lang) && v.localService) || null; } catch { return null; } };
+  const stop = () => { try { speechSynthesis.cancel(); } catch { /* 無い端末 */ } };
+  const visible = (el) => { const r = el.getBoundingClientRect(); const cs = getComputedStyle(el); return r.width > 0 && r.height > 0 && cs.visibility !== "hidden" && !el.closest("[hidden],[aria-hidden=true],[inert]"); };
+  const sayText = () => [...document.querySelectorAll("[data-a11y-say]")].filter(visible).map((el) => (el.getAttribute("aria-label") || el.innerText || "").trim()).filter(Boolean).join("。");
+  const say = (text) => {
+    const v = voice();
+    if (!v || !text) return false;
+    stop();
+    const u = new SpeechSynthesisUtterance(text.slice(0, 600));
+    u.voice = v; u.lang = v.lang; u.rate = 0.95;
+    speechSynthesis.speak(u);
+    return true;
+  };
+
+  let dlg = null, sayBtn = null, lastFocus = null;
+  const build = () => {
+    dlg = document.createElement("dialog");
+    dlg.className = "a11y-dlg";
+    dlg.setAttribute("aria-labelledby", "a11y-h");
+    const hasRuby = !!document.querySelector("ruby.a11y-rb");
+    dlg.innerHTML = `<h2 id="a11y-h">見やすさ・読みやすさ</h2><p>ほかのゲームにも同じ設定が使われます。文字は2本の指で広げると大きくなります。</p>` +
+      OPTS.filter(([k]) => k !== "ruby" || hasRuby).map(([k, n, d]) => `<label><input type="checkbox" data-k="${k}"><span>${n}<small>${d}</small></span></label>`).join("") +
+      `<p class="a11y-note" id="a11y-novoice" hidden>この端末には、外へ送らずに読める日本語の声がありません。</p><div class="a11y-row"><button type="button" class="a11y-ok" data-a11y-close>閉じる</button></div>`;
+    document.body.appendChild(dlg);
+    dlg.addEventListener("change", (e) => {
+      const k = e.target.dataset && e.target.dataset.k;
+      if (!k) return;
+      set(k, e.target.checked);
+      if (k === "say") dlg.querySelector("#a11y-novoice").hidden = !(e.target.checked && !voice());
+    });
+    dlg.querySelector("[data-a11y-close]").addEventListener("click", () => dlg.close());
+    dlg.addEventListener("close", () => { if (lastFocus && lastFocus.focus) lastFocus.focus(); });
+    sayBtn = document.createElement("button");
+    sayBtn.type = "button"; sayBtn.className = "a11y-saybtn"; sayBtn.textContent = "🔊 読む"; sayBtn.setAttribute("aria-label", "画面の問題を読み上げる");
+    sayBtn.addEventListener("click", () => {
+      try { if (speechSynthesis.speaking) return stop(); } catch { /* 無い端末 */ }
+      if (!say(sayText())) open();
+    });
+    document.body.appendChild(sayBtn);
+    if (!document.querySelector("[data-a11y-open]")) {
+      const b = document.createElement("button");
+      b.type = "button"; b.className = "a11y-btn a11y-float"; b.textContent = "Aa"; b.setAttribute("data-a11y-open", ""); b.setAttribute("aria-label", "見やすさの設定");
+      document.body.appendChild(b);
+    }
+    document.addEventListener("click", (e) => { const t = e.target.closest && e.target.closest("[data-a11y-open]"); if (t) { e.preventDefault(); open(); } });
+    apply();
+  };
+  const open = () => {
+    if (!dlg) build();
+    lastFocus = document.activeElement;
+    for (const c of dlg.querySelectorAll("input[data-k]")) c.checked = on(c.dataset.k);
+    dlg.querySelector("#a11y-novoice").hidden = !(on("say") && !voice());
+    if (dlg.showModal) dlg.showModal(); else dlg.setAttribute("open", "");
+  };
+  apply();
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", build); else build();
+  window.A11y = { on, set, open, say, stop };
+})();
+</script>
+<!-- a11y:end -->
+</head><body><main>
 
 <section id="title">
   <header><h1>🍔 わがままバーガー</h1><button class="icon" id="sound1" aria-label="音">🔊</button></header>
   <div class="hero">
     <div class="demo" aria-hidden="true"><span class="ly t-bun-b"></span><span class="ly t-patty"></span><span class="ly t-cheese"></span><span class="ly t-lettuce"></span><span class="ly t-tomato"></span><span class="ly t-bun-t"></span></div>
-    <div class="big">わがまま、ぜんぶ聞きます。</div>
-    <p>注文の条件を全部守る順に、具材を積もう</p>
+    <div class="big" data-a11y-say>わがまま、ぜんぶ聞きます。</div>
+    <p data-a11y-say>注文の条件を全部守る順に、具材を積もう</p>
   </div>
   <button class="daily" id="dailyBtn"><span class="em" id="dailyFace">🍔</span><span><b>きょうのわがまま</b><small id="dailySub">毎日1問、みんな同じ注文</small></span><span class="go">▶</span></button>
   <button class="daily weekly" id="weeklyBtn"><span class="em" id="weeklyFace">🦁</span><span><b>今週の特大わがまま</b><small id="weeklySub">具8枚・週に1問</small></span><span class="go">▶</span></button>
@@ -195,7 +351,7 @@ button.b.main small{font-size:13px;font-weight:400;color:var(--sub)}
   <div class="extra"><h2>🍟 おかわり</h2><div class="new">練習問題がいくらでも出ます。ノーミス（★3）を何問つづけられるか</div><div class="row3" id="extras"></div></div>
   <div id="chapters"></div>
   <details class="log" id="log"><summary>📒 記録帳</summary><div id="logBody"></div></details>
-  <div class="foot">時間制限なし・広告なし・記録はこの端末の中だけ<br><a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">☕ 作者を応援する（Ko-fi）</a><br><a class="fb" href="https://github.com/satou-aaaaa/wagamama-burger/issues/new?template=feedback.yml" target="_blank" rel="noopener">💬 感想を送る</a></div>
+  <div class="foot">時間制限なし・広告なし・記録はこの端末の中だけ<br><a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">☕ 作者を応援する（Ko-fi）</a><br><a href="#" data-a11y-open>👓 見やすさの設定</a><a class="fb" href="https://github.com/satou-aaaaa/wagamama-burger/issues/new?template=feedback.yml" target="_blank" rel="noopener">💬 感想を送る</a></div>
 </section>
 
 <section id="ach" hidden>
@@ -205,12 +361,13 @@ button.b.main small{font-size:13px;font-weight:400;color:var(--sub)}
 </section>
 
 <section id="play" hidden>
-  <header><button class="icon" id="back" aria-label="もどる">◀</button><div class="dots" id="dots"></div><button class="icon" id="sound2" aria-label="音">🔊</button></header>
+  <header><button class="icon" id="back" aria-label="もどる">◀</button><div class="dots" id="dots" role="img" aria-label=""></div><button class="icon" id="sound2" aria-label="音">🔊</button></header>
   <div class="banner" id="banner" hidden></div>
-  <section class="order"><div class="who"><div class="face" id="face"></div><div><div class="lv" id="lv"></div><div class="say" id="say"></div></div></div><ul class="conds" id="conds"></ul></section>
-  <div class="guide" id="guide" hidden><b>あそびかた</b><ol><li>お客さんの条件を読む</li><li>下の具材をタップして、下から積む（積んだ具はタップで外せる）</li><li>全部積んだら「できあがり！」</li></ol><button id="guideOk">わかった</button> <a class="fb" href="https://github.com/satou-aaaaa/wagamama-burger/issues/new?template=feedback.yml" target="_blank" rel="noopener">💬 感想を送る</a></div>
-  <div class="stage" id="stage"><div class="plate"></div><div class="toast" id="toast" role="status" aria-live="polite"></div></div>
+  <section class="order"><div class="who"><div class="face" id="face"></div><div><div class="lv" id="lv"></div><div class="say" id="say" data-a11y-say></div></div></div><ul class="conds" id="conds" data-a11y-say aria-label="注文の条件"></ul></section>
+  <div class="guide" id="guide" hidden><b>あそびかた</b><ol><li>お客さんの条件を読む</li><li>下の具材をタップして、下から積む（積んだ具はタップで外せる）</li><li>全部積んだら「できあがり！」</li></ol><button id="guideOk">わかった</button> <a class="ak" href="#" data-a11y-open>👓 見やすさ</a> <a class="fb" href="https://github.com/satou-aaaaa/wagamama-burger/issues/new?template=feedback.yml" target="_blank" rel="noopener">💬 感想を送る</a></div>
+  <div class="stage" id="stage"><div class="plate"></div><div class="toast" id="toast" aria-hidden="true"></div></div>
   <div class="note" id="note"></div>
+  <p class="sr" id="live" role="status" aria-live="polite"></p>
   <div class="dock" id="dock"><div class="tray" id="tray"></div>
   <button class="b" id="go" disabled>できあがり！</button></div>
   <button class="b main" id="goX2" type="button" hidden><span>🍟 続けて遊ぶ：おかわり</span><small id="goX2Sub"></small></button>
@@ -292,7 +449,11 @@ function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { "&
 var NAME_RE = new RegExp(Object.keys(ING).map(function (k) { return ING[k]; }).sort(function (a, b) { return b.length - a.length; }).join("|"), "g");
 var KEY_OF = {}; Object.keys(ING).forEach(function (k) { KEY_OF[ING[k]] = k; });
 function condHtml(c) { return esc(condText(c)).replace(NAME_RE, function (m) { return '<span class="chip"><i class="ly t-' + KEY_OF[m] + '"></i>' + m + "</span>"; }); }
-function buzz(ms) { try { if (navigator.vibrate && !matchMedia("(prefers-reduced-motion: reduce)").matches) navigator.vibrate(ms); } catch (e) {} }
+// 動きを減らす：端末の「視差効果を減らす」か、見やすさの設定の「動きを減らす」
+function calm() { try { return (window.A11y && A11y.on("calm")) || matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; } }
+function buzz(ms) { try { if (navigator.vibrate && !calm()) navigator.vibrate(ms); } catch (e) {} }
+// 読み上げソフトへの知らせ（画面のひとことと同じ中身を、文字で）
+function live(s) { var l = $("live"); l.textContent = ""; setTimeout(function () { l.textContent = s; }, 50); }
 
 // --- 音（端末の中で鳴らすだけ。外へは何も送らない）---
 var ac = null;
@@ -356,8 +517,8 @@ function showTitle() {
     h += '<div class="chap"><h2><span>' + (ci + 1) + "章 " + c.name + "</span><span>" + (st === PER * 3 ? "👑 " : "") + "★" + st + "/" + PER * 3 + '</span></h2><div class="new">新しいこだわり：' + c.new + '</div><div class="grid">';
     for (var j = ci * PER; j < (ci + 1) * PER; j++) {
       var L = LEVELS[j], ok = unlocked(j), k = stars(j), next = ok && k === 0;
-      h += '<button class="lvbtn' + (ok ? "" : " lock") + (next ? " next" : "") + '" data-i="' + j + '"' + (ok ? "" : " disabled") + ' aria-label="お客さん' + (j + 1) + (k ? "・星" + k : ok ? "" : "・まだ") + '">' +
-        '<span class="f">' + (ok ? L.face : "？") + '</span><span class="s">' + (k ? "★★★".slice(0, k) : "") + "</span></button>";
+      h += '<button class="lvbtn' + (ok ? "" : " lock") + (next ? " next" : "") + '" data-i="' + j + '"' + (ok ? "" : " disabled") + ' aria-label="お客さん' + (j + 1) + (k ? "・星" + k : next ? "・つぎ" : ok ? "" : "・まだ") + '">' +
+        '<span class="f">' + (ok ? L.face : "？") + '</span><span class="s">' + (k ? "★★★".slice(0, k) : next ? "つぎ" : "") + "</span></button>";
     }
     h += "</div></div>";
   });
@@ -569,18 +730,18 @@ function render(full) {
   else if (mode === "extra") { $("lv").textContent = "おかわり・" + EXTRA[exLv].name + "（ノーミス " + ex(exLv).run + "連続中）"; $("dots").innerHTML = ""; }
   else {
     $("lv").textContent = (chapterOf(lv) + 1) + "章 お客さん " + (lv % PER + 1) + " / " + PER;
-    var dh = ""; for (var i = chapterOf(lv) * PER; i < (chapterOf(lv) + 1) * PER; i++) dh += '<i class="' + (i === lv ? "cur" : stars(i) ? "done" : "") + '"></i>';
-    $("dots").innerHTML = dh;
+    var dh = "", nd = 0; for (var i = chapterOf(lv) * PER; i < (chapterOf(lv) + 1) * PER; i++) { if (stars(i)) nd++; dh += '<i class="' + (i === lv ? "cur" : stars(i) ? "done" : "") + '"></i>'; }
+    $("dots").innerHTML = dh; $("dots").setAttribute("aria-label", "この章 " + PER + "人のうち " + nd + "人クリア・いまは" + (lv % PER + 1) + "人目");
   }
   $("conds").innerHTML = L.conds.map(function (c, k) {
     var st = judged ? (judged[k] ? "ok" : "ng") : "";
-    return '<li class="' + st + (isNewCond(c) ? " newc" : "") + (hintCond === k && !done ? " focus" : "") + '"><b aria-label="' + (st === "ok" ? "守れた" : st === "ng" ? "守れていない" : "") + '">' + (st === "ok" ? "✓" : st === "ng" ? "✗" : "・") + "</b><span>" + condHtml(c) + "</span></li>";
+    return '<li class="' + st + (isNewCond(c) ? " newc" : "") + (hintCond === k && !done ? " focus" : "") + '"><b aria-hidden="true">' + (st === "ok" ? "✓" : st === "ng" ? "✗" : "・") + "</b><span>" + (st ? '<span class="sr">' + (st === "ok" ? "守れた：" : "守れていない：") + "</span>" : "") + condHtml(c) + "</span></li>";
   }).join("");
   var sg = $("stage"); sg.querySelectorAll(".ly").forEach(function (e) { e.remove(); });
   var b = layer("bun-b"); b.style.animation = "none"; b.tabIndex = -1; b.setAttribute("aria-label", "下のパン"); sg.appendChild(b);
   stack.forEach(function (t, i) {
     var d = layer(t, hintAt === i ? "hint" : ""); if (i < drawn && !full) d.style.animation = "none";
-    d.setAttribute("aria-label", ING[t] + "（下から" + (i + 1) + "番目）を外す"); d.innerHTML = '<span class="num">' + (i + 1) + "</span>";
+    d.setAttribute("aria-label", ING[t] + "（下から" + (i + 1) + "番目" + (hintAt === i ? "・見直す所" : "") + "）を外す"); d.innerHTML = '<span class="num">' + (i + 1) + '</span><span class="nm" aria-hidden="true">' + ING[t] + "</span>";
     d.onclick = function () { remove(i); }; sg.appendChild(d);
   });
   if (done) { var tp = layer("bun-t"); tp.tabIndex = -1; tp.setAttribute("aria-label", "上のパン"); if (drawn > stack.length) tp.style.animation = "none"; sg.appendChild(tp); drawn = stack.length + 1; }
@@ -590,9 +751,10 @@ function render(full) {
   $("tray").innerHTML = "";
   Object.keys(cnt).forEach(function (t, ki) {
     var e = document.createElement("button"); e.className = "ing" + (hintIng === t ? " hint" : ""); e.dataset.t = t;
-    e.setAttribute("aria-label", ING[t] + "をのせる" + (cnt[t] > 1 ? "（残り" + cnt[t] + "）" : ""));
+    e.setAttribute("aria-label", ING[t] + "をのせる" + (cnt[t] > 1 ? "（残り" + cnt[t] + "）" : "") + (hintIng === t ? "（ヒント：次はこれ）" : ""));
     if (ki < 9) { e.setAttribute("aria-keyshortcuts", String(ki + 1)); e.style.position = "relative"; }
-    e.innerHTML = (ki < 9 ? '<span class="k" aria-hidden="true">' + (ki + 1) + "</span>" : "") + '<span class="ly t-' + t + '"></span>' + ING[t] + (cnt[t] > 1 ? " ×" + cnt[t] : "");
+    if (hintIng === t) e.style.position = "relative";
+    e.innerHTML = (hintIng === t ? '<span class="hm" aria-hidden="true">👉</span>' : "") + (ki < 9 ? '<span class="k" aria-hidden="true">' + (ki + 1) + "</span>" : "") + '<span class="ly t-' + t + '"></span>' + ING[t] + (cnt[t] > 1 ? " ×" + cnt[t] : "");
     e.onclick = function () { add(t); }; $("tray").appendChild(e);
   });
   $("note").textContent = done ? (mode === "daily" ? "次のきょうのわがまままで " + untilNext() : "") : !stack.length ? "下から順にタップして積む。積んだ具はタップで外せる" : left.length ? "" : "積めたら「できあがり！」";
@@ -611,7 +773,7 @@ function render(full) {
   if (!done) kofiShow = false;
   $("kofi").hidden = !(done && kofiShow);
 }
-function toast(s) { var t = $("toast"); t.textContent = s; t.classList.add("on"); clearTimeout(toast.h); toast.h = setTimeout(function () { t.classList.remove("on"); }, 1800); }
+function toast(s, more) { live(s + (more || "")); var t = $("toast"); t.textContent = s; t.classList.add("on"); clearTimeout(toast.h); toast.h = setTimeout(function () { t.classList.remove("on"); }, 1800); }
 function add(t) { if (done) return; var i = left.indexOf(t); if (i < 0) return; left.splice(i, 1); stack.push(t); judged = null; hintAt = hintIng = null; SND.put(); buzz(8); render(); showStack(); }
 // 下に止まる具材の棚（.dock）の後ろに、積んだバーガーが隠れないよう、台の下の端を棚のすぐ上まで送る
 // 台の高さが伸びる動き（0.2秒）が終わってから測る
@@ -619,12 +781,12 @@ function showStack() {
   clearTimeout(showStack.h);
   showStack.h = setTimeout(function () {
     var s = $("stage").getBoundingClientRect(), d = $("dock").getBoundingClientRect(), gap = s.bottom - d.top + 6;
-    if (gap > 0) scrollBy({ top: gap, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+    if (gap > 0) scrollBy({ top: gap, behavior: calm() ? "auto" : "smooth" });
   }, 230);
 }
 function remove(i) { if (done) return; left.push(stack[i]); stack.splice(i, 1); judged = null; hintAt = hintIng = null; drawn = i; SND.off(); render(); }
 function confetti() {
-  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  if (calm()) return;
   var cs = ["#f5b800", "#e8572a", "#4caf2c", "#d4302a", "#fff"];
   for (var k = 0; k < 28; k++) { var c = document.createElement("i"); c.className = "confetti"; c.style.left = (Math.random() * 100) + "%"; c.style.background = cs[k % cs.length]; c.style.animationDelay = (Math.random() * 0.4) + "s"; $("stage").appendChild(c); }
 }
@@ -668,19 +830,19 @@ function finish() {
     if (mode === "daily") dailyShare = rec.daily && rec.daily.day === cur.daily ? rec.daily : { day: cur.daily, solved: true, stars: rec.log[cur.daily] || n, tries: tries, hint: usedHint };
     render(); showStack();
     // 上のパンがのった瞬間に、全体がぎゅっとつぶれて戻る（できあがりの手ごたえ）
-    setTimeout(function () { var sg = $("stage"); sg.classList.add("squash"); setTimeout(function () { sg.classList.remove("squash"); }, 320); }, 300);
+    if (!calm()) setTimeout(function () { var sg = $("stage"); sg.classList.add("squash"); setTimeout(function () { sg.classList.remove("squash"); }, 320); }, 300);
     SND.win(); buzz([20, 40, 20]); confetti();
     var st = document.createElement("div"); st.className = "stars"; st.setAttribute("aria-label", "星" + n + "つ");
-    st.innerHTML = [0, 1, 2].map(function (k) { return '<span class="' + (k < n ? "" : "off") + '" style="animation-delay:' + (0.2 + k * 0.15) + 's">★</span>'; }).join("");
+    st.setAttribute("role", "img"); st.innerHTML = [0, 1, 2].map(function (k) { return '<span class="' + (k < n ? "" : "off") + '" style="animation-delay:' + (0.2 + k * 0.15) + 's">' + (k < n ? "★" : "☆") + "</span>"; }).join("");
     $("stage").appendChild(st);
-    $("face").style.transform = "scale(1.25)"; setTimeout(function () { $("face").style.transform = ""; }, 600);
-    toast(mode === "daily" && first ? "🔥 " + rec.streak.n + "日連続！" : mode === "extra" && ex(exLv).run >= 2 ? "ノーミス " + ex(exLv).run + "連続！" : n === 3 ? "★3 ノーミス！" : "できあがり！");
+    if (!calm()) $("face").style.transform = "scale(1.25)"; setTimeout(function () { $("face").style.transform = ""; }, 600);
+    toast(mode === "daily" && first ? "🔥 " + rec.streak.n + "日連続！" : mode === "extra" && ex(exLv).run >= 2 ? "ノーミス " + ex(exLv).run + "連続！" : n === 3 ? "★3 ノーミス！" : "できあがり！", "。全部の条件を守れた。星" + n + "つ");
     if (mode === "level" && first && (lv + 1) % PER === 0) setTimeout(function () { toast((chapterOf(lv) + 1) + "章クリア！"); }, 1900);
     return;
   }
   render(); SND.ng(); buzz(60);
-  $("face").style.transform = "rotate(-12deg)"; setTimeout(function () { $("face").style.transform = ""; }, 600);
-  toast(LOSE[Math.floor(Math.random() * LOSE.length)]);
+  if (!calm()) $("face").style.transform = "rotate(-12deg)"; setTimeout(function () { $("face").style.transform = ""; }, 600);
+  toast(LOSE[Math.floor(Math.random() * LOSE.length)], "。守れていない条件が" + r.filter(function (x) { return !x; }).length + "つ（✗の印）");
 }
 // お客さんのひとこと（できあがりの吹き出し）。問題ごとに決まる
 function winIx() { return mode === "daily" || mode === "past" ? cur.daily : mode === "weekly" ? cur.weekly : mode === "extra" ? cur.k + exLv : lv; }

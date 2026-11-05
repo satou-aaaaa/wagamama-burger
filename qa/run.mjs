@@ -749,11 +749,54 @@ try {
     down = false;
     check("PWA の確かめでページのエラーが無い", errPw.length === 0, errPw.join(" / "));
   } finally { await ctx.close(); server.close(); }
+  // 色だけで分けない（WCAG 1.4.1。shared-workflows routines/game-dev.md A1）：守れた/守れない・つぎ・まだ・星・ヒント・章の進み具合が、記号・文字・aria-label でも分かる
+  {
+    const pc = await browser.newPage({ viewport: { width: 390, height: 800 } });
+    await pc.goto(url); await pc.evaluate(() => localStorage.clear()); await pc.reload();
+    const c = await pc.evaluate(() => {
+      const o = {};
+      const next = document.querySelector(".lvbtn.next"), lock = document.querySelector(".lvbtn.lock");
+      o.next = next && /つぎ/.test(next.textContent) && /つぎ/.test(next.getAttribute("aria-label"));
+      o.lock = lock && /？/.test(lock.textContent) && /まだ/.test(lock.getAttribute("aria-label"));
+      __game.start(0); const L = __game.state.cur;
+      [...L.answer].reverse().forEach((t) => __game.add(t)); __game.finish();
+      const lis = [...document.querySelectorAll("ul.conds li")];
+      o.marks = lis.every((li) => (li.classList.contains("ok") && /✓/.test(li.textContent) && /守れた：/.test(li.textContent)) || (li.classList.contains("ng") && /✗/.test(li.textContent) && /守れていない：/.test(li.textContent)));
+      o.dots = /人クリア/.test(document.getElementById("dots").getAttribute("aria-label") || "");
+      __game.start(0); __game.state.cur.answer.forEach((t, i) => { if (i < 1) __game.add(t); }); __game.hint(); __game.hint();
+      const h = document.querySelector(".ing.hint");
+      o.hint = !!h && /👉/.test(h.textContent) && /ヒント/.test(h.getAttribute("aria-label"));
+      return o;
+    });
+    await pc.waitForTimeout(150);
+    const lv = await pc.evaluate(() => document.getElementById("live").textContent);
+    check("色だけで分けない：つぎ/まだのお客さん・守れた✓/守れない✗（読み上げにも）・章の進み具合・ヒントの具（👉）が、記号と文字でも分かる（WCAG 1.4.1）", c.next && c.lock && c.marks && c.dots && c.hint, JSON.stringify(c));
+    check("知らせ（ヒント・正解・まちがい）が読み上げ用の場所 #live（role=status）に文字で出る（WCAG 4.1.3）", /次は/.test(lv) && (await pc.locator("#live[role=status]").count()) === 1, lv);
+    const s3 = await pc.evaluate(() => { __game.start(0); __game.state.cur.answer.forEach((t) => __game.add(t)); __game.hint(); __game.finish(); return [...document.querySelectorAll(".stage .stars span")].map((e) => e.textContent).join(""); });
+    check("結果の星は、取れなかった分を ☆（形）で出す（色の濃さだけにしない）", /^★+☆+$/.test(s3) || s3 === "★★★", s3);
+    // 色の見分けを助ける設定：守れた/守れないの色をカラーユニバーサルデザインの組に替え、積んだ具に名前を出す
+    await pc.evaluate(() => { localStorage.setItem("a11y-v1", JSON.stringify({ cvd: true })); }); await pc.reload();
+    const cv = await pc.evaluate(() => { __game.start(0); const L = __game.state.cur; [...L.answer].reverse().forEach((t) => __game.add(t)); __game.finish();
+      const nm = document.querySelector(".stage .ly .nm"); const ok = getComputedStyle(document.documentElement).getPropertyValue("--ok").trim();
+      return { cvd: document.documentElement.classList.contains("a11y-cvd"), nm: nm && getComputedStyle(nm).display !== "none" && nm.textContent, ok }; });
+    check("色の見分けを助ける設定で、守れた＝青（#0072b2）に替わり、積んだ具に名前が出る", cv.cvd && cv.nm && /^#0072b2$/i.test(cv.ok), JSON.stringify(cv));
+    // 動きを減らす設定で、紙吹雪を出さない
+    await pc.evaluate(() => { localStorage.setItem("a11y-v1", JSON.stringify({ calm: true })); }); await pc.reload();
+    const cf = await pc.evaluate(() => { __game.start(0); __game.state.cur.answer.forEach((t) => __game.add(t)); __game.finish(); return document.querySelectorAll(".confetti").length; });
+    check("動きを減らす設定で、紙吹雪を出さない", cf === 0, String(cf));
+    await pc.close();
+  }
 } catch (e) {
   // 操作が途中で止まっても、失敗として report.md に残す
   check("QA の実行が途中で止まった", false, String(e.message || e).split("\n")[0]);
 } finally {
   await browser.close();
+}
+
+{ // 見やすさ・読みやすさ・偏り（shared-workflows template/qa/a11y.mjs の写し。routines/game-dev.md「だれでも遊べるように」）
+  const { spawnSync } = await import("node:child_process");
+  const a = spawnSync(process.execPath, [path.join(root, "qa", "a11y.mjs")], { encoding: "utf8", env: process.env });
+  check("見やすさ・読みやすさの検査（qa/a11y.mjs。中身は qa-report/a11y.md）", a.status === 0, (a.stdout.match(/^- ❌.*$/gm) || []).join(" / ") || (a.status ? a.stderr.slice(-300) : ""));
 }
 
 const failed = results.filter((r) => !r.ok);
