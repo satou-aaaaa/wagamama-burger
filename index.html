@@ -174,7 +174,9 @@ button.b.main small{font-size:13px;font-weight:400;color:var(--sub)}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}.confetti{display:none}}
 /* all:unset などで枠が消えないよう、キーで選んだ所の枠はいちばん最後に強く書く */
 :is(.icon,button,a,summary):focus-visible{outline:2px solid var(--acc)!important;outline-offset:2px}
-</style></head><body><main>
+</style><!-- 引き継ぎコード（shared-workflows template/transfer.js の写し）。ゲームの script より前に置く -->
+<script src="transfer.js" data-game="wagamama-burger" data-keys="wagamamaBurger1,a11y-v1"></script>
+</head><body><main>
 
 <section id="title">
   <header><h1>🍔 わがままバーガー</h1><button class="icon" id="sound1" aria-label="音">🔊</button></header>
@@ -195,7 +197,7 @@ button.b.main small{font-size:13px;font-weight:400;color:var(--sub)}
   <div class="extra"><h2>🍟 おかわり</h2><div class="new">練習問題がいくらでも出ます。ノーミス（★3）を何問つづけられるか</div><div class="row3" id="extras"></div></div>
   <div id="chapters"></div>
   <details class="log" id="log"><summary>📒 記録帳</summary><div id="logBody"></div></details>
-  <div class="foot">時間制限なし・広告なし・記録はこの端末の中だけ<br><a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">☕ 作者を応援する（Ko-fi）</a><br><a class="fb" href="https://github.com/satou-aaaaa/wagamama-burger/issues/new?template=feedback.yml" target="_blank" rel="noopener">💬 感想を送る</a></div>
+  <div class="foot">時間制限なし・広告なし・記録はこの端末の中だけ<br><a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">☕ 作者を応援する（Ko-fi）</a><br><a class="fb" href="https://github.com/satou-aaaaa/wagamama-burger/issues/new?template=feedback.yml" target="_blank" rel="noopener">💬 感想を送る</a><br><a href="#" data-hk>🔁 記録の引き継ぎ（別の端末へ）</a></div>
 </section>
 
 <section id="ach" hidden>

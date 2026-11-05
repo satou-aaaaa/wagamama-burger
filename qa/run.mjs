@@ -6,6 +6,7 @@ import { createRequire } from "node:module";
 import http from "node:http";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { checkTransfer } from "./transfer-check.mjs";
 import { createHash } from "node:crypto";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -736,7 +737,7 @@ try {
     await pw.reload(); await pw.waitForFunction(() => !!navigator.serviceWorker.controller);
     check("sw.js が入り、画面を受け持つ", await pw.evaluate(() => !!navigator.serviceWorker.controller));
     const shell = readFileSync(path.join(root, "sw.js"), "utf8");
-    const scripts = ["rules.js", "levels.js"].filter((f) => !shell.includes(`"./${f}"`));
+    const scripts = ["rules.js", "levels.js", "transfer.js"].filter((f) => !shell.includes(`"./${f}"`));
     check("画面が読むファイルが sw.js の SHELL にそろう", scripts.length === 0, scripts.join(","));
     await ctx.setOffline(true);
     const offErr = await pw.reload().then(() => "", (e) => e.message.split("\n")[0]);
@@ -753,6 +754,9 @@ try {
   // 操作が途中で止まっても、失敗として report.md に残す
   check("QA の実行が途中で止まった", false, String(e.message || e).split("\n")[0]);
 } finally {
+  try { // 引き継ぎコード（別の端末へ記録を移す。shared-workflows template/qa/transfer-check.mjs）
+    await checkTransfer({ browser, url, game: "wagamama-burger", sample: { "wagamamaBurger1": JSON.stringify({ stars: { 1: 3 } }) }, check });
+  } catch (e) { check("引き継ぎコード", false, e.message.split("\n")[0]); }
   await browser.close();
 }
 
