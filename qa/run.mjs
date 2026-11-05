@@ -792,7 +792,7 @@ try {
   check("QA の実行が途中で止まった", false, String(e.message || e).split("\n")[0]);
 } finally {
   try { // 引き継ぎコード（別の端末へ記録を移す。shared-workflows template/qa/transfer-check.mjs）
-    await checkTransfer({ browser, url, game: "wagamama-burger", sample: { "wagamamaBurger1": JSON.stringify({ stars: { 1: 3 } }) }, check });
+    await checkTransfer({ browser, url, game: "wagamama-burger", sample: { "wagamamaBurger1": JSON.stringify({ best: [3, 2], guided: true, log: { 10: 3 }, past: {}, badges: ["first"] }) }, check });
   } catch (e) { check("引き継ぎコード", false, e.message.split("\n")[0]); }
   await browser.close();
 }
