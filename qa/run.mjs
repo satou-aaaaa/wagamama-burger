@@ -106,6 +106,8 @@ for (const k of Object.keys(FP)) check(`過去の問題が変わらない（${k}
 check("週は月曜はじまり（11/3火は0週、11/9月から1週）", weekOf(0) === 0 && weekOf(5) === 0 && weekOf(6) === 1 && weekOf(12) === 1 && weekOf(13) === 2);
 check("日の番号は日本時間の0時で変わる（2026-11-03 が #1）", dayNumber(new Date("2026-11-02T23:59:00+09:00")) === -1 && dayNumber(new Date("2026-11-03T00:00:00+09:00")) === 0 && dayNumber(new Date("2026-11-03T23:59:00+09:00")) === 0 && dayNumber(new Date("2026-11-04T00:00:00+09:00")) === 1);
 const html = readFileSync(path.join(root, "index.html"), "utf8");
+{ const fy = readFileSync(path.join(root, ".github/ISSUE_TEMPLATE/feedback.yml"), "utf8");
+  check("感想フォームの name が3字以上（「感想」の2字だと GitHub がフォームを出さず白紙の Issue になる。shared-workflows incidents/2026-11-05-feedback-form-not-shown.md）", [...((fy.match(/^name:\s*(.+)$/m) || [])[1] || "").trim()].length >= 3 && /^description:\s*\S/m.test(fy), (fy.match(/^name:.*$/m) || [""])[0]); }
 const og = (p) => (html.match(new RegExp(`<meta (?:property|name)="${p}" content="([^"]+)"`)) || [])[1];
 check("OGP：題・説明・画像（絶対 URL）・大きいカードの指定がある", og("og:title") && og("og:description") && /^https:\/\/satou-aaaaa\.github\.io\/wagamama-burger\/ogp\.png$/.test(og("og:image") || "") && og("twitter:card") === "summary_large_image", og("og:image"));
 const png = existsSync(path.join(root, "ogp.png")) ? readFileSync(path.join(root, "ogp.png")) : null;
