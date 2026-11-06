@@ -81,6 +81,14 @@ for (let l = 0; l < EXTRA.length; l++) {
   }
 }
 check("おかわり：3つの難しさ×150問すべて答えが1つ・要らない条件なし・同じ番号は同じ問題・重複なし", xBad.length === 0, xBad.slice(0, 5).join(","));
+// おかわりは何問でも続く。並べ方を変えただけの同じ問題（具材の組と条件の組が同じ）が早く戻らないか、ふつう1500問・むずかしい300問で見る
+// （2026-11-06 測った値：ふつうは2000問で1998通り・はじめて同じ問題が戻るのは1899問目。むずかしい・達人は2000問で重なりなし）
+{
+  const canon = (p) => [...p.items].sort().join() + "|" + p.conds.map((c) => c.join(":")).sort().join(";");
+  const far = [];
+  [[0, 1500], [1, 300]].forEach(([l, N]) => { const m = new Map(); for (let k = 0; k < N; k++) { const K = canon(makeExtra(l, k)); if (m.has(K)) far.push(`${EXTRA[l].name}${m.get(K) + 1}=${k + 1}`); m.set(K, k); } });
+  check("おかわり：ふつう1500問・むずかしい300問のあいだ、同じ問題（具材と条件の組）が戻らない", far.length === 0, far.slice(0, 5).join(","));
+}
 // 1d. 今週の特大わがまま：156週（3年分）。具8枚・条件5〜7・答えが1つ・要らない条件なし・同じ週は同じ問題・重複なし。週は月曜はじまり
 const wBad = [], wSeen = new Set();
 for (let w = 0; w < 156; w++) {
@@ -123,9 +131,18 @@ try {
   await page.goto(url);
   await page.evaluate(() => localStorage.clear()); await page.reload();
 
-  // 2. タイトル：30人並び、最初の1人だけ選べる
+  // 2. タイトル：40人並び、はじめから全員選べる（🔒で開く仕組みは入れない。2026-11-06 satou さん「好きなだけ遊んでほしい」）
   check("タイトルに40人並ぶ", (await page.locator(".lvbtn").count()) === 40);
-  check("はじめは最初のお客さんだけ選べる", (await page.locator(".lvbtn:not(.lock)").count()) === 1);
+  check("はじめから40人全員を選べる（押せないお客さん・🔒・？が無い）", (await page.locator(".lvbtn:not([disabled])").count()) === 40 && (await page.locator(".lvbtn.lock").count()) === 0 && !/🔒|？/u.test(await page.textContent("#chapters")));
+  check("はじめは1人目だけに「つぎ」の印", (await page.locator(".lvbtn.next").count()) === 1 && (await page.getAttribute(".lvbtn.next", "data-i")) === "0");
+  {
+    const t = await page.evaluate(() => document.body.innerText);
+    check("ページに🎫（チケット）・回数制限・「…すると開く」の文が無い", !/🎫|チケット|すると開く|で開く|回まで遊べ|残り\d+回/.test(t), (t.match(/.{0,10}(🎫|チケット|すると開く|で開く|回まで遊べ).{0,10}/) || [""])[0]);
+    check("Ko-fi はタイトルの下のリンクと結果の画面の1行だけ（ほかに出さない）", await page.evaluate(() => { const a = [...document.querySelectorAll('a[href*="ko-fi"]')]; return a.length === 2 && a.some((x) => x.closest(".foot")) && a.some((x) => x.closest("#kofi")) && document.getElementById("kofi").closest("#play") !== null; }));
+  }
+  await page.click('.lvbtn[data-i="39"]');
+  check("はじめての人でも40人目（4章・達人）をタイトルから遊べる", await page.evaluate(() => __game.state.mode === "level" && __game.state.lv === 39 && !document.getElementById("play").hidden));
+  await page.evaluate(() => __game.showTitle());
   check("外のサイトのスクリプトを読まない", await page.evaluate(() => [...document.scripts].every((s) => !s.src || new URL(s.src).protocol === "file:")));
   const kofi = await page.evaluate(() => [...document.links].find((a) => a.href.includes("ko-fi"))?.href);
   check("応援のリンクが Ko-fi のページを指す（ボタン用スクリプトは入れない）", kofi === "https://ko-fi.com/satouaaaaa", kofi || "無い");
@@ -225,7 +242,7 @@ try {
   await page.click("#back");
   await page.click("#sound1");
   await page.reload();
-  check("開き直しても記録が残る（2人クリア → 3人目が開く）", (await page.locator(".lvbtn:not(.lock)").count()) >= 3);
+  check("開き直しても記録が残る（クリアした人に★が出る・全員選べるまま）", (await page.locator(".lvbtn .s", { hasText: "★" }).count()) >= 2 && (await page.locator(".lvbtn:not([disabled])").count()) === 40);
   check("開き直しても音を消した設定が残る", (await page.textContent("#sound1")) === "🔈");
   const share = await page.evaluate(() => shareText());
   check("シェアの文にクリア人数と星が入る", /お客さん \d+\/40 人クリア ★\d+/.test(share), share.split("\n")[1]);
@@ -750,15 +767,40 @@ try {
     down = false;
     check("PWA の確かめでページのエラーが無い", errPw.length === 0, errPw.join(" / "));
   } finally { await ctx.close(); server.close(); }
+  // おかわりは、まちがえてもヒントを使っても終わらず、何も減らない（チケット・回数制限なし。2026-11-06 satou さん）
+  {
+  const px = await browser.newPage({ viewport: { width: 390, height: 800 } });
+  await px.goto(url); await px.evaluate(() => { localStorage.clear(); localStorage.setItem("wagamamaBurger1", JSON.stringify({ best: [], guided: true })); }); await px.reload();
+  const xm = await px.evaluate(() => {
+    const out = [];
+    for (let i = 0; i < 20; i++) {
+      const l = i % 3; __game.startExtra(l);
+      const c = __game.state.cur, k0 = c.k, n0 = __game.rec().extra[l] ? __game.rec().extra[l].n : 0;
+      const bad = perms(c.items).find((o) => !check(o, c.conds).every(Boolean));
+      bad.forEach((t) => __game.add(t)); __game.finish();
+      const afterMiss = __game.state.mode === "extra" && !__game.state.done && __game.state.cur.k === k0;
+      document.getElementById("retry").click(); __game.hint(); __game.hint(); __game.hint();
+      const afterHint = __game.state.mode === "extra" && !__game.state.done && !document.getElementById("hint").disabled;
+      document.getElementById("retry").click(); __game.state.cur.answer.forEach((t) => __game.add(t)); __game.finish();
+      const solved = __game.state.done && __game.rec().extra[l].n === n0 + 1;
+      __game.finish();
+      const next = __game.state.mode === "extra" && !__game.state.done && __game.state.cur.k === k0 + 1;
+      if (!(afterMiss && afterHint && solved && next)) out.push({ i, afterMiss, afterHint, solved, next });
+    }
+    return out;
+  });
+  check("おかわり：まちがえてもヒントを3回使っても終わらず、解けば次の問題へ続く（20問）", xm.length === 0, JSON.stringify(xm.slice(0, 3)));
+  await px.close();
+  }
   // 色だけで分けない（WCAG 1.4.1。shared-workflows routines/game-dev.md A1）：守れた/守れない・つぎ・まだ・星・ヒント・章の進み具合が、記号・文字・aria-label でも分かる
   {
     const pc = await browser.newPage({ viewport: { width: 390, height: 800 } });
     await pc.goto(url); await pc.evaluate(() => localStorage.clear()); await pc.reload();
     const c = await pc.evaluate(() => {
       const o = {};
-      const next = document.querySelector(".lvbtn.next"), lock = document.querySelector(".lvbtn.lock");
+      const next = document.querySelector(".lvbtn.next"), lock = document.querySelector(".lvbtn.todo");
       o.next = next && /つぎ/.test(next.textContent) && /つぎ/.test(next.getAttribute("aria-label"));
-      o.lock = lock && /？/.test(lock.textContent) && /まだ/.test(lock.getAttribute("aria-label"));
+      o.lock = lock && /まだ/.test(lock.textContent) && /まだ/.test(lock.getAttribute("aria-label")) && !lock.disabled && getComputedStyle(lock).borderStyle === "dashed";
       __game.start(0); const L = __game.state.cur;
       [...L.answer].reverse().forEach((t) => __game.add(t)); __game.finish();
       const lis = [...document.querySelectorAll("ul.conds li")];

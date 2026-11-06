@@ -42,7 +42,7 @@ h1{font-size:20px;margin:0}
 .grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
 .lvbtn{font:inherit;border:2px solid var(--line);background:var(--bg);color:var(--ink);border-radius:12px;padding:6px 0;cursor:pointer;display:flex;flex-direction:column;align-items:center;line-height:1.1}
 .lvbtn .f{font-size:22px}.lvbtn .s{font-size:10px;color:var(--star);letter-spacing:-1px;min-height:11px}
-.lvbtn.lock{cursor:default;border-style:dashed;background:transparent;color:var(--sub)}
+.lvbtn.todo{border-style:dashed;background:transparent}.lvbtn.todo .s{color:var(--sub);letter-spacing:0}
 .lvbtn.next{border-color:var(--acc);border-width:3px}.lvbtn.next .s{color:var(--acc);font-weight:700;letter-spacing:0}
 .extra{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px;margin:12px 0}
 .extra h2,.log summary{font-size:15px;margin:0 0 2px;font-weight:700}
@@ -447,7 +447,7 @@ function save() { try { mergeRec(rec, JSON.parse(localStorage.getItem(KEY) || "n
 function stars(i) { return rec.best[i] || 0; }
 function ex(l) { var e = rec.extra[l]; if (!e || typeof e.n !== "number") e = rec.extra[l] = { n: 0, run: 0, best: 0, perfect: 0 }; return e; }
 function chapterStars(ci) { var st = 0; for (var i = ci * PER; i < (ci + 1) * PER; i++) st += stars(i); return st; }
-function unlocked(i) { return i === 0 || stars(i - 1) > 0 || stars(i) > 0; }
+// お客さんは全員はじめから選べる（🔒で開く仕組みは入れない。2026-11-06 satou さん「好きなだけ遊んでほしい」）
 function total() { return rec.best.reduce(function (a, b) { return a + (b || 0); }, 0); }
 function clearedCount() { return rec.best.filter(function (b) { return b > 0; }).length; }
 var todayOverride = null;
@@ -519,19 +519,19 @@ function showTitle() {
   $("calSub").textContent = "遊んだ日 " + playedDays() + "日";
   achRender();
   $("cont").textContent = clearedCount() ? "つづきから（" + (nextLevel() + 1) + "人目）" : "はじめから";
-  var h = "";
+  var h = "", nx = nextLevel();
   CHAPTERS.forEach(function (c, ci) {
     var st = chapterStars(ci);
     h += '<div class="chap"><h2><span>' + (ci + 1) + "章 " + c.name + "</span><span>" + (st === PER * 3 ? "👑 " : "") + "★" + st + "/" + PER * 3 + '</span></h2><div class="new">新しいこだわり：' + c.new + '</div><div class="grid">';
     for (var j = ci * PER; j < (ci + 1) * PER; j++) {
-      var L = LEVELS[j], ok = unlocked(j), k = stars(j), next = ok && k === 0;
-      h += '<button class="lvbtn' + (ok ? "" : " lock") + (next ? " next" : "") + '" data-i="' + j + '"' + (ok ? "" : " disabled") + ' aria-label="お客さん' + (j + 1) + (k ? "・星" + k : next ? "・つぎ" : ok ? "" : "・まだ") + '">' +
-        '<span class="f">' + (ok ? L.face : "？") + '</span><span class="s">' + (k ? "★★★".slice(0, k) : next ? "つぎ" : "") + "</span></button>";
+      var L = LEVELS[j], k = stars(j), next = k === 0 && j === nx;
+      h += '<button class="lvbtn' + (k || next ? "" : " todo") + (next ? " next" : "") + '" data-i="' + j + '" aria-label="お客さん' + (j + 1) + (k ? "・星" + k : next ? "・つぎ" : "・まだ") + '">' +
+        '<span class="f">' + L.face + '</span><span class="s">' + (k ? "★★★".slice(0, k) : next ? "つぎ" : "まだ") + "</span></button>";
     }
     h += "</div></div>";
   });
   $("chapters").innerHTML = h;
-  $("chapters").querySelectorAll(".lvbtn:not(.lock)").forEach(function (b) { b.onclick = function () { start(+b.dataset.i); }; });
+  $("chapters").querySelectorAll(".lvbtn").forEach(function (b) { b.onclick = function () { start(+b.dataset.i); }; });
   $("share1").hidden = clearedCount() === 0 && !dailyDone();
   $("goXSub").textContent = exLabel(exPick());
   $("extras").innerHTML = EXTRA.map(function (e, l) { var x = ex(l); return '<button data-l="' + l + '"><b>' + e.name + "</b><small>具" + e.n + "枚・" + x.n + "問</small><small>ノーミス最高 " + x.best + "</small></button>"; }).join("");
@@ -709,7 +709,8 @@ function startPast(d) {
 }
 var exLv = 0, exCache = {};
 // おかわりは作るのに少し時間がかかる（達人で最大0.2秒ほど）ので、次の問題を手のあいたときに先に作っておく
-function extraOf(l, k) { var key = l + ":" + k; if (!exCache[key]) exCache[key] = makeExtra(l, k); return exCache[key]; }
+// 作れない番号は（今まで一度も無いが）別の種でもう一度作り、おかわりが止まらないようにする
+function extraOf(l, k) { var key = l + ":" + k; if (!exCache[key]) { var p = makeExtra(l, k); for (var j = 1; !p && j < 50; j++) { p = makeExtra(l, k + j * 1000003); if (p) { p.k = k; p.say = (k + 1) + "問目"; } } exCache[key] = p; } return exCache[key]; }
 function prefetchExtra(l, k) { var f = function () { extraOf(l, k); }; if (window.requestIdleCallback) requestIdleCallback(f, { timeout: 2000 }); else setTimeout(f, 300); }
 function thisWeek() { return weekOf(today()); }
 // 特大は作るのに少し時間がかかる（具8枚）ので、週ごとに1回だけ作って覚える
