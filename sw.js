@@ -1,7 +1,7 @@
 // わがままバーガーを端末に保存して、電波が無くても遊べるようにする（PWA）。
 // 画面は先にネットを見て、つながらないときだけ保存したものを使う（直した版がすぐ届く）。
 // 記録（localStorage）には触らない。外へ何も送らない（よそのサイトへの通信は扱わない）。
-const CACHE = "burger-v10";
+const CACHE = "burger-v11";
 const SHELL = ["./", "./index.html", "./rules.js", "./levels.js", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./transfer.js"];
 
 // 入れるときは HTTP の保存を通さず取り直す（古い画面を新しい版に入れない。2026-11-06 CodeRabbit。shared-workflows routines/game-dev.md「PWA」）
