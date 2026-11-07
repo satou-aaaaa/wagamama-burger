@@ -36,6 +36,8 @@ h1{font-size:20px;margin:0}
 .hero p{margin:0;color:var(--sub);font-size:14px}
 .demo{display:flex;flex-direction:column-reverse;align-items:center;margin:14px auto 0;width:160px}
 .demo .ly{animation:none;cursor:default}
+/* 背の低い画面（320×640 など）では絵を小さくし、「はじめから」まで最初の画面に収める */
+@media (max-height:720px){.hero{padding-top:4px}.demo{transform:scale(.66);margin:-24px auto -30px}.hero .big{margin-top:4px}}
 .chap{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:10px 12px;margin:12px 0}
 .chap h2{font-size:15px;margin:0 0 2px;display:flex;justify-content:space-between}
 .chap .new{font-size:12px;color:var(--sub);margin-bottom:8px}
@@ -131,6 +133,7 @@ ul.conds li.newc::after{content:"NEW";font-size:10px;font-weight:800;color:var(-
 .ing.hint{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc)}
 .ing .hm{position:absolute;top:-10px;right:-6px;font-size:16px}
 .note{font-size:12px;color:var(--sub);text-align:center;min-height:1.4em}
+.note.ngn{color:var(--ng);font-weight:700;font-size:13px}
 button.b{font:inherit;font-size:18px;font-weight:700;border-radius:14px;padding:12px;background:var(--acc);color:var(--onacc);border:2px solid var(--acc);cursor:pointer;width:100%;margin-top:6px}
 button.b.sec{background:var(--card);color:var(--ink);border-color:var(--line)}
 button.b:disabled{cursor:default;background:var(--card);color:var(--sub);border-color:var(--sub);border-style:dashed}
@@ -165,6 +168,7 @@ button.b.main{display:flex;flex-direction:column;align-items:center;justify-cont
 button.b.main small{font-size:13px;font-weight:400;color:var(--sub)}
 .streak{text-align:center;font-size:13px;color:var(--sub);min-height:1.4em}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.row2:has(>[hidden]){grid-template-columns:1fr} /* シェアが無い（はじめての人）ときは「はじめから」を幅いっぱいに */
 .banner{background:var(--card);border:2px dashed var(--acc);border-radius:14px;padding:8px 12px;margin-top:10px;font-size:14px;text-align:center}
 .guide{background:var(--card);border:2px solid var(--acc);border-radius:16px;padding:12px 14px;margin:10px 0;font-size:14px;line-height:1.7}
 .guide ol{margin:4px 0 8px;padding-left:1.4em}
@@ -374,11 +378,11 @@ html.a11y-say body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!i
   <section class="order"><div class="who"><div class="face" id="face"></div><div><div class="lv" id="lv"></div><div class="say" id="say" data-a11y-say></div></div></div><ul class="conds" id="conds" data-a11y-say aria-label="注文の条件"></ul></section>
   <div class="guide" id="guide" hidden><b>あそびかた</b><ol><li>お客さんの条件を読む</li><li>下の具材をタップして、下から積む（積んだ具はタップで外せる）</li><li>全部積んだら「できあがり！」</li></ol><button id="guideOk">わかった</button> <a class="ak" href="#" data-a11y-open>👓 見やすさ</a> <a class="fb" href="https://github.com/satou-aaaaa/wagamama-burger/issues/new?template=feedback.yml" target="_blank" rel="noopener">💬 感想を送る</a></div>
   <div class="stage" id="stage"><div class="plate"></div><div class="toast" id="toast" aria-hidden="true"></div></div>
-  <div class="note" id="note"></div>
+  <div class="note" id="note" data-a11y-say></div>
   <p class="sr" id="live" role="status" aria-live="polite"></p>
   <div class="dock" id="dock"><div class="tray" id="tray"></div>
-  <button class="b" id="go" disabled>できあがり！</button></div>
   <button class="b main" id="goX2" type="button" hidden><span>🍟 続けて遊ぶ：おかわり</span><small id="goX2Sub"></small></button>
+  <button class="b" id="go" disabled>できあがり！</button></div>
   <div class="after" id="after" hidden><button class="b sec" id="shareQ">🤝 出題する</button><button class="b sec" id="shareR">📣 結果をシェア</button><a class="fb" href="https://github.com/satou-aaaaa/wagamama-burger/issues/new?template=feedback.yml" target="_blank" rel="noopener">💬 感想を送る</a></div>
   <p class="gotach" id="gotAch" hidden></p>
   <p class="kofi" id="kofi" hidden>楽しめたら、<a href="https://ko-fi.com/satouaaaaa" target="_blank" rel="noopener">Ko-fi でコーヒー1杯の応援</a>をもらえると、新しいお客さんづくりの励みになります（任意・遊ぶのはずっと無料）。</p>
@@ -766,7 +770,8 @@ function render(full) {
     e.innerHTML = (hintIng === t ? '<span class="hm" aria-hidden="true">👉</span>' : "") + (ki < 9 ? '<span class="k" aria-hidden="true">' + (ki + 1) + "</span>" : "") + '<span class="ly t-' + t + '"></span>' + ING[t] + (cnt[t] > 1 ? " ×" + cnt[t] : "");
     e.onclick = function () { add(t); }; $("tray").appendChild(e);
   });
-  $("note").textContent = done ? (mode === "daily" ? "次のきょうのわがまままで " + untilNext() : "") : !stack.length ? "下から順にタップして積む。積んだ具はタップで外せる" : left.length ? "" : "積めたら「できあがり！」";
+  $("note").textContent = done ? (mode === "daily" ? "次のきょうのわがまままで " + untilNext() : "") : !stack.length ? "下から順にタップして積む。積んだ具はタップで外せる" : judged && !judged.every(Boolean) ? "✗の条件を直そう。積んだ具はタップで外せる" : left.length ? "" : "積めたら「できあがり！」";
+  $("note").classList.toggle("ngn", !done && !!judged && !judged.every(Boolean));
   var g = $("go"); g.disabled = !done && left.length > 0;
   g.innerHTML = done ? (mode === "daily" || mode === "weekly" || mode === "past" ? "タイトルへ" : mode === "extra" ? "次のおかわり ▶" : lv < LEVELS.length - 1 ? "次のお客さん ▶" : "全員クリア！タイトルへ")
     : left.length ? 'できあがり！ <span class="left">（あと' + left.length + "個）</span>" : "できあがり！";
@@ -777,6 +782,8 @@ function render(full) {
   // 毎日1問・週の問題・あとからを解いたら、次に遊べる「おかわり」へ大きなボタンで案内する（今日の分で終わりに見えないように）
   var toX = done && (mode === "daily" || mode === "weekly" || mode === "past");
   $("goX2").hidden = !toX;
+  // おかわりを先に・大きく出し、「タイトルへ」は控えめにする（今日の分で終わりに見えないように）
+  g.classList.toggle("sec", toX);
   if (toX) $("goX2Sub").textContent = exLabel(exPick());
   $("after").hidden = !done; $("shareQ").hidden = mode !== "level"; $("shareR").hidden = mode === "past"; $("sub").hidden = done;
   if (!done) kofiShow = false;
@@ -833,6 +840,8 @@ function finish() {
     else if (mode === "past") { first = !rec.past[pastDay]; rec.past[pastDay] = Math.max(rec.past[pastDay] || 0, n); }
     else { first = !stars(lv); rec.best[lv] = Math.max(stars(lv), n); }
     kofiShow = mode === "level" && first && (lv + 1) % PER === 0;
+    // 1つ完成させたら遊び方はわかったものとして、案内を閉じる（結果の画面でバーガーを下へ押し出さない）
+    if (!rec.guided) { rec.guided = true; $("guide").hidden = true; }
     var got = newBadges(); save(); lastGot = got;
     if (got.length) setTimeout(function () { toast("🏅 実績：" + got.map(function (b) { return b[1] + b[2]; }).join("・")); }, mode === "level" && first && (lv + 1) % PER === 0 ? 3800 : 1900);
     // 結果画面のシェアは、いま解いた日の記録で（別のタブが先にその日を解いていたら、その記録）
@@ -851,7 +860,7 @@ function finish() {
   }
   render(); SND.ng(); buzz(60);
   if (!calm()) $("face").style.transform = "rotate(-12deg)"; setTimeout(function () { $("face").style.transform = ""; }, 600);
-  toast(LOSE[Math.floor(Math.random() * LOSE.length)], "。守れていない条件が" + r.filter(function (x) { return !x; }).length + "つ（✗の印）");
+  toast(LOSE[Math.floor(Math.random() * LOSE.length)], "。守れていない条件が" + r.filter(function (x) { return !x; }).length + "つ（✗の印）。積んだ具はタップで外せる");
 }
 // お客さんのひとこと（できあがりの吹き出し）。問題ごとに決まる
 function winIx() { return mode === "daily" || mode === "past" ? cur.daily : mode === "weekly" ? cur.weekly : mode === "extra" ? cur.k + exLv : lv; }

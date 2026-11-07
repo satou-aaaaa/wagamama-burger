@@ -725,6 +725,65 @@ try {
     check("小さいスマホでも、棚と「できあがり！」に届き、積んだバーガーと条件が見えたまま遊べる", bad.length === 0, bad.slice(0, 5).join(","));
   }
 
+  // 8c. はじめての人のスマホの見え方（2026-11-07 UI/UX の見直し）
+  //     ホームを開いた最初の画面に、きょうのわがまま・おかわり・「はじめから」が収まる。はじめての人の「はじめから」は幅いっぱい。
+  //     まちがえたら直し方を出す。1つ完成させたら遊び方の案内は閉じる。毎日1問の結果では、おかわりが「タイトルへ」より上で目立つ
+  {
+    const bad = [];
+    for (const [w, h] of [[390, 844], [320, 640]]) {
+      const p = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 1 });
+      p.on("pageerror", (e) => errors.push(e.message));
+      await p.goto(url); await p.evaluate(() => localStorage.clear()); await p.reload();
+      const home = await p.evaluate(() => {
+        const r = (q) => document.querySelector(q).getBoundingClientRect();
+        const row = r(".row2"), cont = r("#cont");
+        return { inView: ["#dailyBtn", "#weeklyBtn", "#go-x", "#cont"].filter((q) => { const b = r(q); return !(b.top >= 0 && b.bottom <= innerHeight + 1); }), contWide: cont.width >= row.width - 1, over: document.documentElement.scrollWidth > innerWidth };
+      });
+      if (home.inView.length) bad.push(`${w}:最初の画面の外 ${home.inView.join(" ")}`);
+      if (!home.contWide) bad.push(`${w}:はじめからが幅いっぱいでない`);
+      if (home.over) bad.push(`${w}:ホームが横にはみ出す`);
+      // はじめての1人目：まちがえると、✗の条件を直す案内が出る
+      await p.click("#cont");
+      const L = LEVELS[0], wrong = perms(L.items).find((o) => !judge(o, L.conds).every(Boolean));
+      for (const t of wrong) await p.click(`.ing[data-t="${t}"]`);
+      await p.click("#go");
+      const nt = await p.evaluate(() => { const n = document.getElementById("note"); return { t: n.textContent, ng: n.classList.contains("ngn") }; });
+      if (!/✗の条件を直そう/.test(nt.t) || !nt.ng) bad.push(`${w}:まちがえたあとの案内 ${JSON.stringify(nt)}`);
+      // 直し方の案内は「読む」ボタンでも読まれ（data-a11y-say）、知らせ（#live）でも外し方を言う
+      await p.waitForTimeout(120);
+      const nsay = await p.evaluate(() => ({ say: document.getElementById("note").hasAttribute("data-a11y-say"), live: document.getElementById("live").textContent }));
+      if (!nsay.say || !/タップで外せる/.test(nsay.live)) bad.push(`${w}:まちがえたあとの案内が読まれない ${JSON.stringify(nsay)}`);
+      await p.click("#retry");
+      const nt2 = await p.evaluate(() => { const n = document.getElementById("note"); return { t: n.textContent, ng: n.classList.contains("ngn") }; });
+      if (/✗/.test(nt2.t) || nt2.ng) bad.push(`${w}:積み直したのに✗の案内が残る ${JSON.stringify(nt2)}`);
+      if (!(await p.locator("#guide").isVisible())) bad.push(`${w}:はじめての人に案内が出ない`);
+      for (const t of L.answer) await p.click(`.ing[data-t="${t}"]`);
+      await p.click("#go");
+      const g = await p.evaluate(() => ({ hidden: document.getElementById("guide").hidden, saved: JSON.parse(localStorage.getItem("wagamamaBurger1")).guided === true }));
+      if (!g.hidden || !g.saved) bad.push(`${w}:1つ完成しても案内が閉じない ${JSON.stringify(g)}`);
+      // 毎日1問の結果：おかわりが上・「タイトルへ」は控えめ（sec）
+      // 毎日1問・今週の特大・あとからの結果：どれもおかわりが上・「タイトルへ」は控えめ（sec）
+      for (const [name, how] of [["毎日1問", "daily"], ["今週の特大", "weekly"], ["あとから", "past"]]) {
+        await p.evaluate((how) => {
+          if (how === "daily") __game.startDaily();
+          else if (how === "weekly") __game.startWeekly();
+          else { __game.setToday(500); __game.startPast(498); }
+          __game.state.cur.answer.forEach((t) => __game.add(t)); __game.finish();
+        }, how);
+        await p.waitForTimeout(400);
+        const rs = await p.evaluate(() => { const x = document.getElementById("goX2").getBoundingClientRect(), go = document.getElementById("go"); return { mode: __game.state.mode, done: __game.state.done, above: x.height > 0 && x.bottom <= go.getBoundingClientRect().top + 1, sec: go.classList.contains("sec"), over: document.documentElement.scrollWidth > innerWidth }; });
+        if (rs.mode !== how) bad.push(`${w}:${name}の結果を出せない ${JSON.stringify(rs)}`);
+        else if (!rs.above || !rs.sec) bad.push(`${w}:${name}の結果でおかわりが上にない ${JSON.stringify(rs)}`);
+        if (rs.over) bad.push(`${w}:${name}の結果が横にはみ出す`);
+      }
+      // お客さん（章）の結果では「次のお客さん」は目立つまま
+      await p.evaluate(() => { __game.start(1); __game.state.cur.answer.forEach((t) => __game.add(t)); __game.finish(); });
+      if (await p.evaluate(() => document.getElementById("go").classList.contains("sec"))) bad.push(`${w}:次のお客さんが控えめになっている`);
+      await p.close();
+    }
+    check("スマホ（390×844・320×640）：最初の画面に入口が収まり、まちがいの直し方・案内の自動で閉じる・結果のおかわりが上", bad.length === 0, bad.join(" / "));
+  }
+
   // 9. PWA：ホーム画面に置ける形と、一度開けば電波が無くても遊べる（http で開いて確かめる）
   const types = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".webmanifest": "application/manifest+json", ".png": "image/png" };
   let down = false;
