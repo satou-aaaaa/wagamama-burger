@@ -378,7 +378,7 @@ html.a11y-say body{padding-bottom:calc(64px + env(safe-area-inset-bottom,0px))!i
   <section class="order"><div class="who"><div class="face" id="face"></div><div><div class="lv" id="lv"></div><div class="say" id="say" data-a11y-say></div></div></div><ul class="conds" id="conds" data-a11y-say aria-label="注文の条件"></ul></section>
   <div class="guide" id="guide" hidden><b>あそびかた</b><ol><li>お客さんの条件を読む</li><li>下の具材をタップして、下から積む（積んだ具はタップで外せる）</li><li>全部積んだら「できあがり！」</li></ol><button id="guideOk">わかった</button> <a class="ak" href="#" data-a11y-open>👓 見やすさ</a> <a class="fb" href="https://github.com/satou-aaaaa/wagamama-burger/issues/new?template=feedback.yml" target="_blank" rel="noopener">💬 感想を送る</a></div>
   <div class="stage" id="stage"><div class="plate"></div><div class="toast" id="toast" aria-hidden="true"></div></div>
-  <div class="note" id="note"></div>
+  <div class="note" id="note" data-a11y-say></div>
   <p class="sr" id="live" role="status" aria-live="polite"></p>
   <div class="dock" id="dock"><div class="tray" id="tray"></div>
   <button class="b main" id="goX2" type="button" hidden><span>🍟 続けて遊ぶ：おかわり</span><small id="goX2Sub"></small></button>
@@ -860,7 +860,7 @@ function finish() {
   }
   render(); SND.ng(); buzz(60);
   if (!calm()) $("face").style.transform = "rotate(-12deg)"; setTimeout(function () { $("face").style.transform = ""; }, 600);
-  toast(LOSE[Math.floor(Math.random() * LOSE.length)], "。守れていない条件が" + r.filter(function (x) { return !x; }).length + "つ（✗の印）");
+  toast(LOSE[Math.floor(Math.random() * LOSE.length)], "。守れていない条件が" + r.filter(function (x) { return !x; }).length + "つ（✗の印）。積んだ具はタップで外せる");
 }
 // お客さんのひとこと（できあがりの吹き出し）。問題ごとに決まる
 function winIx() { return mode === "daily" || mode === "past" ? cur.daily : mode === "weekly" ? cur.weekly : mode === "extra" ? cur.k + exLv : lv; }

@@ -749,20 +749,33 @@ try {
       await p.click("#go");
       const nt = await p.evaluate(() => { const n = document.getElementById("note"); return { t: n.textContent, ng: n.classList.contains("ngn") }; });
       if (!/✗の条件を直そう/.test(nt.t) || !nt.ng) bad.push(`${w}:まちがえたあとの案内 ${JSON.stringify(nt)}`);
+      // 直し方の案内は「読む」ボタンでも読まれ（data-a11y-say）、知らせ（#live）でも外し方を言う
+      await p.waitForTimeout(120);
+      const nsay = await p.evaluate(() => ({ say: document.getElementById("note").hasAttribute("data-a11y-say"), live: document.getElementById("live").textContent }));
+      if (!nsay.say || !/タップで外せる/.test(nsay.live)) bad.push(`${w}:まちがえたあとの案内が読まれない ${JSON.stringify(nsay)}`);
       await p.click("#retry");
-      const nt2 = await p.textContent("#note");
-      if (/✗/.test(nt2)) bad.push(`${w}:積み直したのに✗の案内が残る`);
+      const nt2 = await p.evaluate(() => { const n = document.getElementById("note"); return { t: n.textContent, ng: n.classList.contains("ngn") }; });
+      if (/✗/.test(nt2.t) || nt2.ng) bad.push(`${w}:積み直したのに✗の案内が残る ${JSON.stringify(nt2)}`);
       if (!(await p.locator("#guide").isVisible())) bad.push(`${w}:はじめての人に案内が出ない`);
       for (const t of L.answer) await p.click(`.ing[data-t="${t}"]`);
       await p.click("#go");
       const g = await p.evaluate(() => ({ hidden: document.getElementById("guide").hidden, saved: JSON.parse(localStorage.getItem("wagamamaBurger1")).guided === true }));
       if (!g.hidden || !g.saved) bad.push(`${w}:1つ完成しても案内が閉じない ${JSON.stringify(g)}`);
       // 毎日1問の結果：おかわりが上・「タイトルへ」は控えめ（sec）
-      await p.evaluate(() => { __game.startDaily(); __game.state.cur.answer.forEach((t) => __game.add(t)); __game.finish(); });
-      await p.waitForTimeout(400);
-      const rs = await p.evaluate(() => { const x = document.getElementById("goX2").getBoundingClientRect(), go = document.getElementById("go"); return { above: x.height > 0 && x.bottom <= go.getBoundingClientRect().top + 1, sec: go.classList.contains("sec"), over: document.documentElement.scrollWidth > innerWidth }; });
-      if (!rs.above || !rs.sec) bad.push(`${w}:結果でおかわりが上にない ${JSON.stringify(rs)}`);
-      if (rs.over) bad.push(`${w}:結果が横にはみ出す`);
+      // 毎日1問・今週の特大・あとからの結果：どれもおかわりが上・「タイトルへ」は控えめ（sec）
+      for (const [name, how] of [["毎日1問", "daily"], ["今週の特大", "weekly"], ["あとから", "past"]]) {
+        await p.evaluate((how) => {
+          if (how === "daily") __game.startDaily();
+          else if (how === "weekly") __game.startWeekly();
+          else { __game.setToday(500); __game.startPast(498); }
+          __game.state.cur.answer.forEach((t) => __game.add(t)); __game.finish();
+        }, how);
+        await p.waitForTimeout(400);
+        const rs = await p.evaluate(() => { const x = document.getElementById("goX2").getBoundingClientRect(), go = document.getElementById("go"); return { mode: __game.state.mode, done: __game.state.done, above: x.height > 0 && x.bottom <= go.getBoundingClientRect().top + 1, sec: go.classList.contains("sec"), over: document.documentElement.scrollWidth > innerWidth }; });
+        if (rs.mode !== how) bad.push(`${w}:${name}の結果を出せない ${JSON.stringify(rs)}`);
+        else if (!rs.above || !rs.sec) bad.push(`${w}:${name}の結果でおかわりが上にない ${JSON.stringify(rs)}`);
+        if (rs.over) bad.push(`${w}:${name}の結果が横にはみ出す`);
+      }
       // お客さん（章）の結果では「次のお客さん」は目立つまま
       await p.evaluate(() => { __game.start(1); __game.state.cur.answer.forEach((t) => __game.add(t)); __game.finish(); });
       if (await p.evaluate(() => document.getElementById("go").classList.contains("sec"))) bad.push(`${w}:次のお客さんが控えめになっている`);
