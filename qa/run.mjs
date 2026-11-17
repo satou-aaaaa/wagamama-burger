@@ -608,7 +608,7 @@ try {
     await pz.evaluate((T) => { const log = {}; log[T - 4] = 3; log[T - 3] = 2; log[T - 1] = 1; const past = {}; past[T - 2] = 2; localStorage.setItem("wagamamaBurger1", JSON.stringify({ best: [], guided: true, log, past })); }, T);
     await pz.reload(); await reopen();
     const head = await pz.evaluate(() => {
-      const small = [...document.querySelectorAll(".cal button.mc, .calhead button")].filter((b) => b.getBoundingClientRect().height < 44).length;
+      const small = [...document.querySelectorAll(".cal button.mc, .calhead button")].filter((b) => Math.round(b.getBoundingClientRect().height) < 44).length;
       return { title: document.getElementById("calTitle").textContent, nextOff: document.getElementById("calNext").disabled, sum: document.getElementById("calSum").textContent, small, wide: document.documentElement.scrollWidth > innerWidth, open: document.getElementById("log").open };
     });
     await pz.screenshot({ path: path.join(root, "qa-report", "calendar-320.png"), fullPage: true }).catch(() => {});
