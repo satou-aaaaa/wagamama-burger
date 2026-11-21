@@ -280,6 +280,8 @@ try {
   ds = await solveDaily(13);
   check("とぎれたあと解くと1日から数え直す", ds.streak === 1);
   await pq.reload();
+  // 開き直すと検査用の「今日」（setToday）が消えるので、もう一度 13日目にしてから見る（実際の今日だと連続0日で表示が空になり落ちていた。2026-11-22）
+  await pq.evaluate(() => { __game.setToday(13); __game.showTitle(); });
   check("開き直しても連続日数と最高が残る", /最高 2日/.test(await pq.textContent("#streak")), await pq.textContent("#streak"));
   // 間違えてから解くと、結果の絵文字に 🟥 が入る
   await pq.evaluate(() => { __game.setToday(20); __game.startDaily(); });
