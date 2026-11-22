@@ -1159,6 +1159,12 @@ function focusCond() {
   cnt.forEach(function (n, k) { if (n < rest.length && n < bestN) { bestN = n; best = k; } });
   return { k: best, broken: false };
 }
+// 光らせた条件が画面の外（スマホで条件が多いと上に隠れる）なら、見える所まで少しだけ動かす（「この条件」が見えないまま言わない）
+function showFocus() {
+  var el = document.querySelector("#conds .focus"); if (!el) return;
+  var r = el.getBoundingClientRect();
+  if (r.top < 0 || r.bottom > innerHeight) { clearTimeout(showStack.h); el.scrollIntoView({ block: "nearest", behavior: calm() ? "auto" : "smooth" }); }
+}
 function hint() {
   if (done) return;
   var ans = cur.answer, i = 0; while (i < stack.length && stack[i] === ans[i]) i++;
@@ -1168,7 +1174,7 @@ function hint() {
     var f = focusCond();
     // 光らせる条件が無いのは、残りの積み方が1通りで全部守れるときだけ。ヒントを使ったことにしない
     if (f.k < 0) { toast("あとは残りを積むだけ"); return; }
-    usedHint = true; hintLv = 1; hintCond = f.k; hintAt = hintIng = null; render();
+    usedHint = true; hintLv = 1; hintCond = f.k; hintAt = hintIng = null; render(); showFocus();
     toast(f.broken ? "👀 この条件が、もう守れない" : f.stuck ? "👀 積んだ中に見直す所。この条件に注目" : "👀 まずはこの条件から");
     return;
   }
