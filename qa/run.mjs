@@ -556,6 +556,27 @@ try {
       return { lv: __game.hintLv, focus: document.querySelectorAll("ul.conds li.focus").length, toast: document.getElementById("toast").textContent };
     });
     check("2人目でオニオンを下に置いて1回目のヒント：どの条件も1つずつなら守れるが、条件が1つ光る", h4.lv === 1 && h4.focus === 1 && /見直す/.test(h4.toast), JSON.stringify(h4));
+    // 光らせた条件は画面の中に見える（2026-11-22 週1の見直し：360×640 の今週の特大で、具を積んで下へ動いた後のヒントが、画面の上に隠れた条件を「この条件」と言っていた）
+    {
+      const ps = await browser.newPage({ viewport: { width: 360, height: 640 }, reducedMotion: "reduce" });
+      await ps.goto(url); await ps.evaluate(() => { localStorage.clear(); localStorage.setItem("wagamamaBurger1", JSON.stringify({ best: [], guided: true })); }); await ps.reload();
+      const fv = await ps.evaluate(async (n) => {
+        const bad = [], cases = [() => __game.startWeekly()];
+        for (let i = 0; i < n; i++) cases.push(((k) => () => __game.start(k))(i));
+        for (let k = 0; k < 10; k++) cases.push(((j) => () => __game.startExtra(2, j))(k));
+        for (const [ix, go] of cases.entries()) {
+          go(); const c = __game.state.cur; [...c.answer].reverse().slice(0, 2).forEach((t) => __game.add(t));
+          await new Promise((r) => setTimeout(r, 300)); // 積んだ後に台を見せる動き（showStack、0.23秒後）が終わってから
+          window.scrollTo(0, document.documentElement.scrollHeight); __game.hint();
+          await new Promise((r) => setTimeout(r, 300));
+          const el = document.querySelector("ul.conds li.focus"); if (!el) continue;
+          const r = el.getBoundingClientRect(); if (r.top < 0 || r.bottom > innerHeight) bad.push(ix + ":" + Math.round(r.top));
+        }
+        return { bad, n: cases.length };
+      }, LEVELS.length);
+      check(`360×640 で下へ動いた後の1回目のヒント（${fv.n}問）：光らせた条件が画面の中に見える`, fv.bad.length === 0, fv.bad.slice(0, 5).join(" "));
+      await ps.close();
+    }
     // 40人 × まちがった置き方（下に答えとちがう具を1枚・逆順に2枚・逆順に3枚）：1回目のヒントでヒントを使ったなら、必ず条件が1つ光る
     const hw = await pz.evaluate((LV) => {
       const bad = []; let n = 0;
