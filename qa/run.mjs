@@ -248,6 +248,18 @@ try {
   check("シェアの文にクリア人数と星が入る", /お客さん \d+\/40 人クリア ★\d+/.test(share), share.split("\n")[1]);
   check("ページのエラーが無い", errors.length === 0, errors.join(" / "));
 
+  // 「戻る」：スマホのブラウザの「戻る」で、ゲームから出ずにタイトルへ（共通部品 game-core の Core.screens）
+  { const pb = await browser.newPage({ viewport: { width: 390, height: 800 } });
+    pb.on("pageerror", (e) => errors.push(e.message));
+    await pb.goto(url); const home0 = pb.url(), got = [];
+    for (const [btn, wait] of [["#cont", "#play"], ["#achBtn", "#ach"], ["#dailyBtn", "#play"]]) {
+      await pb.click(btn); await pb.waitForSelector(wait, { state: "visible" }); const h = await pb.evaluate(() => location.hash);
+      await pb.goBack(); await pb.waitForSelector("#title", { state: "visible" });
+      got.push({ btn, h, url: pb.url(), home: await pb.isVisible("#dailyBtn") && await pb.isHidden("#play") });
+    }
+    check("「戻る」：遊ぶ画面・実績・きょうのわがままからタイトルへ戻り、ゲームのページのまま", got.every((g) => g.h.length > 1 && g.url === home0 && g.home), JSON.stringify(got));
+    await pb.close(); }
+
   // 7b. 出題リンク・きょうのわがまま・連続日数・シェアの文（答えを書かない）
   const names = Object.values(ING);
   const leak = (t) => names.filter((n) => t.includes(n));
